@@ -1,0 +1,4 @@
+<launch>
+    <node pkg="teleop_twist_keyboard" name="teleop_twist_keyboard" type="teleop_twist_keyboard.py"/>
+    <node pkg="CuGoPy_Controller" name="CuGoPy_Controller_node" type="CuGoPy_Controller_node.py"/>
+</launch>

@@ -1,0 +1,6 @@
+<launch>
+    <!-- /cmd_vel を出力するpkgを記入すること 
+    <node pkg="pkg_name" name="node_name" type="execution_file.py"/>
+    -->
+    <node pkg="CuGoPy_Controller" name="CuGoPy_Controller_node" type="CuGoPy_Controller_node.py"/>
+</launch>

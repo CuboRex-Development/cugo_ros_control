@@ -1,0 +1,5 @@
+<launch>
+    <node pkg="joy" name="joy_node" type="joy_node"/>
+    <node pkg="teleop_twist_joy" name="teleop_node" type="teleop_node"/>
+    <node pkg="CuGoPy_Controller" name="CuGoPy_Controller_node" type="CuGoPy_Controller_node.py"/>
+</launch>
