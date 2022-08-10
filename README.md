@@ -23,48 +23,26 @@ $ catkin_make
  
 # Usage
  
-
-
-設定できる項目は以下の通りです。
+実行方法
 ~~~
-// シリアル通信での情報の表示有無
-bool UDP_CONNECTION_DISPLAY = false;
-bool ENCODER_DISPLAY = true;
-bool PID_CONTROLL_DISPLAY = false;
-bool FAIL_SAFE_DISPLAY = true;
-
-// Ethernet Shield に印刷されている6桁の番号を入れてください。なお、ロボット内ローカル環境動作なので、そのままでもOK。
-byte mac[] = {0x02, 0x00, 0x00, 0x00, 0x00, 0x00};  // お持ちのArduinoShield相当の端末のアドレスを記入
-
-// ROSアプリケーションと同じ値にしてください。
-IPAddress ip(192, 168, 8, 216);     // Arduinoのアドレス。LAN内でかぶらない値にすること。
-unsigned int localPort = 8888;      // 8888番ポートを聞いて待つ
-
-// PID ゲイン調整
-// L側
-//const float L_KP = 1.5;  // CuGoV3
-//const float L_KI = 0.02; // CuGoV3
-//const float L_KD = 0.1;  // CuGoV3
-const float L_KP = 1.0;    // MEGA
-const float L_KI = 0.06;   // MEGA
-const float L_KD = 0.1;    // MEGA
-
-// R側
-const float R_KP = 1.0;    // MEGA
-const float R_KI = 0.06;   // MEGA
-const float R_KD = 0.1;    // MEGA
-//const float R_KP = 1.5;  // CuGoV3
-//const float R_KI = 0.02; // CuGoV3
-//const float R_KD = 0.1;  // CuGoV3
-
-// ローパスフィルタ
-const float L_LPF = 0.95;
-const float R_LPF = 0.95;
-
-// 回転方向ソフトウェア切り替え
-const bool L_reverse = true;
-const bool R_reverse = false;
+$ rosrun CuGoPy_Controller CuGoPy_Controller.py
 ~~~
+→ノード名が旧名なので、"cugo-ros-controller"に後ほど変更します。
+
+Launchで起動すると、joy_nodeやteleop_joy_nodeを同時に起動することができます。
+~~~
+$ roslaunch CuGoPy_Controller start_ps4_controller.launch
+~~~
+他に、任意のノードと同時に起動したい場合、こちらのlaunchファイルを編集して使用してください。
+~~~
+$ roslaunch CuGoPy_Controller start_any_apps.launch
+~~~
+
+ROSのインストールなどは後ほど記載します。
+
+
+画面の表示方法、見られるパラメータに関しては後ほど整理、記載します。（Arduino側と同等に表示する内容を選択できるようにします）
+
  
 # Note
  
