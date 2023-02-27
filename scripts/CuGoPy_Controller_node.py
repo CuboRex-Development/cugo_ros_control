@@ -64,10 +64,12 @@ class CuGo_Controler():
         self.not_recv_cnt   = 0
         self.stop_motor_time = 500 #NavigationやコントローラからSubscriberできなかったときにモータを止めるまでの時間(ms)
         #self.arduino_addr = ('192.168.1.177', 8888)
-        self.arduino_addr = ('192.168.8.216', 8888) 
+        self.arduino_addr = ('192.168.11.214', 8888) 
         self.UDP_BUFF = 256
         self.send_str = ''
         self.recv_str = ''
+
+        self.first_connection = True
 
 
     def callback(self, msg):
@@ -245,8 +247,14 @@ class CuGo_Controler():
             # UDP通信が完了してからやる。テストを別関数にしたのでそれで検証。
             print("calc twist")
             self.last_recv_time = self.recv_time
-            count_diff_l = self.recv_encoder_l - self.last_recv_encoder_l
-            count_diff_r = self.recv_encoder_r - self.last_recv_encoder_r
+            if self.first_connection == False:
+                count_diff_l = self.recv_encoder_l - self.last_recv_encoder_l
+                count_diff_r = self.recv_encoder_r - self.last_recv_encoder_r
+            
+            else:
+                count_diff_l = 0
+                count_diff_r = 0
+                self.first_connection = False
             
             # 3カウント以下はノイズと判定しこのループは無視する
             # 片方だけ無視とかは不具合の温床なので、優先度低めで対応
