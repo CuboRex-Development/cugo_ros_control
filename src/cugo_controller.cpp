@@ -45,7 +45,7 @@ int stop_motor_time = 500; //NavigationやコントローラからSubscriberで�
 //string arduino_addr = "192.168.8.216";
 string arduino_addr = "127.0.0.1";
 int arduino_port = 8888;
-int UDP_BUFF = 256;
+int UDP_BUFF = 64;
 string send_str = "";
 string recv_str = "";
 
@@ -201,9 +201,23 @@ void UDP_send_string_cmd()
 
 void UDP_send_cmd()
 {
+  unsigned char byte_data[UDP_BUFF];
+  memset(byte_data, 0x00, sizeof(byte_data));
+
+  const unsigned char HEAD = 0xFF;
+  std::memcpy(byte_data, &HEAD, sizeof(HEAD));
+
+  unsigned char* target_rpm_l_ptr = reinterpret_cast<unsigned char*>(&target_rpm_l);
+  unsigned char* target_rpm_r_ptr = reinterpret_cast<unsigned char*>(&target_rpm_r);
+
+  std::memcpy(byte_data + 1, target_rpm_l_ptr, sizeof(float));
+  std::memcpy(byte_data + 5, target_rpm_l_ptr, sizeof(float));
+
   float data[] = {target_rpm_l, target_rpm_r};
+  std::cout << target_rpm_l << ", " << target_rpm_r << std::endl;
   UDP_send_time = ros::Time::now();
-  int send_len = sendto(sock, (unsigned char*) data, sizeof data, 0, (struct sockaddr *)&addr, sizeof(addr));
+  //int send_len = sendto(sock, (unsigned char*) data, sizeof data, 0, (struct sockaddr *)&addr, sizeof(addr));
+  int send_len = sendto(sock, (unsigned char*) byte_data, sizeof byte_data, 0, (struct sockaddr *)&addr, sizeof(addr));
   //sendto(sock, (unsigned char*) data, sizeof data, 0, (struct sockaddr *)&addr, sizeof(addr));
   std::cout << "send_len: " << send_len << std::endl;
 }
@@ -304,13 +318,19 @@ void send_rpm_MCU()
 {
   std::cout << "\nsend_rpm_MCU" << std::endl;
   // create send data
+  string send_data = to_string(target_rpm_l) + "," + to_string(target_rpm_r) + "\n";
+  std::cout << send_data << std::endl;
 
-  //UDP_send_cmd();
-  UDP_send_string_cmd();
+  // binary
+  UDP_send_cmd();
+  // string
+  //UDP_send_string_cmd();
 }
 
 void recv_count_MCU()
 {
+  // TODO settimeout周り
+
   char buf[UDP_BUFF];
   memset(buf, 0, sizeof(buf));
   int n = recv(sock, buf, sizeof(buf), 0);
@@ -323,10 +343,23 @@ void recv_count_MCU()
     }
   }else{
     printf("-------received data-------\n");
-    // TODO floatでの受信ができない
-    //std::cout << atof(buf) << std::endl;
-    std::cout << string(buf) << std::endl;
+    for(int i=0;i<UDP_BUFF;i++){
+      printf("%3hhu ", buf[i]);
+      if((i+1)%16==0) printf("\n");
+    }
+
+    // ベクトル計算用の時間を計測
+    last_recv_time = recv_time;
+    recv_time = ros::Time::now();
+
+    // floatで読み出し
+    recv_encoder_l = *reinterpret_cast<float*>(buf + 1);
+    recv_encoder_r = *reinterpret_cast<float*>(buf + 5);
+
+    std::cout << "recv_encoder: " << recv_encoder_l << ", " << recv_encoder_r << std::endl;
   }
+
+  // タイムアウト設定時間を戻す
 }
 
 void odom_publish()
@@ -338,6 +371,10 @@ void odom_publish()
 
 void node_shutdown()
 {
+  close_UDP();
+  cmd_vel_sub.shutdown();
+  ros::shutdown();
+  std::cout << "node_shutdown" << std::endl;
 }
 
 void read_params(ros::NodeHandle nh)
@@ -350,7 +387,8 @@ void read_params(ros::NodeHandle nh)
   nh.param("tread", tread, (float)0.380); // default: CuGO V3
   nh.param("reduction_ratio", reduction_ratio, (float)1.0); // default: CuGO V3
   nh.param("encoder_resolution", encoder_resolution, 2048);
-  nh.param("encoder_max", encoder_max, 2147483647); // -2147483648 ~ 2147483647(Arduinoのlong intは32bit) nh.param("arduino_addr", arduino_addr, string("192.168.8.216"));
+  nh.param("encoder_max", encoder_max, 2147483647); // -2147483648 ~ 2147483647(Arduinoのlong intは32bit)
+  nh.param("arduino_addr", arduino_addr, string("192.168.8.216"));
   nh.param("arduino_port", arduino_port, 8888);
 }
 
@@ -383,10 +421,7 @@ int main(int argc, char **argv)
     loop_rate.sleep();
   }
 
-  close_UDP();
-  //std::cout << std::endl;
-  //cmd_vel_sub.shutdown();
-  //ros::shutdown();
+  node_shutdown();
 
   return 0;
 }
