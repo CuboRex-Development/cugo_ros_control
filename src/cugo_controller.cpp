@@ -16,11 +16,18 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
-//#include <unistd.h>
+#include <unistd.h>
 #include <arpa/inet.h>
-//#include <netinet/in.h>
 
 using namespace std;
+
+struct UdpHeader
+{
+  uint16_t sourcePort;
+  uint16_t destinationPort;
+  uint16_t length;
+  uint16_t checksum;
+};
 
 // TODO 関数の引き数を上手く設定してグローバル変数を減らす
 // parameters
@@ -29,27 +36,22 @@ int baudrate       = 115200;
 float timeout        = 0.05;  // 10hzで回す場合
 float wheel_radius_l = 0.03858;   //初期値はCuGO V3の値
 float wheel_radius_r = 0.03858;   //初期値はCuGO V3の値
-// float tread          = 0.380;     //初期値はCuGO V3の値
 float reduction_ratio = 1.0;      //初期値はCuGo V3の値
-// float wheel_radius_l  = 0.030375;  //CuGO MEGAの値
-// float wheel_radius_r  = 0.030375;  //CuGO MEGAの値
 float tread           = 0.635;     //CuGO MEGAの値
-//float reduction_ratio = 0.3333;    //CuGO MEGAの値
 
 int encoder_resolution = 2048;
 int encoder_max    = 2147483647; // -2147483648 ~ 2147483647(Arduinoのlong intは32bit)
 
 int not_recv_cnt   = 0;
 int stop_motor_time = 500; //NavigationやコントローラからSubscriberできなかったときにモータを>止めるまでの時間(ms)
-//self.arduino_addr = ('192.168.1.177', 8888)
 //string arduino_addr = "192.168.8.216";
 string arduino_addr = "127.0.0.1";
 int arduino_port = 8888;
-int UDP_BUFF = 64;
+const int UDP_BUFF_SIZE = 64;
+const int UDP_HEADER_SIZE = 8;
 string send_str = "";
 string recv_str = "";
 
-// global variables
 // TODO 関連の深いものを上手く構造体にまとめる
 // odom系、vectorなどlr系、dt系
 float vector_v       = 0.0;
@@ -77,6 +79,7 @@ bool start_serial_comm = false;
 // UDP
 int sock;
 struct sockaddr_in addr;
+struct timeval tv;
 
 ros::Time subscribe_time;
 ros::Time recv_time;
@@ -85,7 +88,6 @@ ros::Time UDP_send_time;
 
 ros::Subscriber cmd_vel_sub;
 ros::Publisher odom_pub;
-//static tf::TransformBroadcaster br;
 
 void cmd_vel_callback(const geometry_msgs::Twist &msg)
 {
@@ -172,6 +174,14 @@ void init_UDP()
   addr.sin_family = AF_INET;
   addr.sin_port = htons(arduino_port);
 
+  tv.tv_sec = timeout;
+  tv.tv_usec = 0;
+
+  if(setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv)) < 0) {
+    perror("setsockopt");
+    return;
+  }
+
   bind_UDP();
   int val = 1;
   ioctl(sock, FIONBIO, &val);
@@ -183,6 +193,24 @@ void close_UDP()
   close(sock);
 }
 
+uint16_t calculateChecksum(const void* data, size_t size, size_t start = 0)
+{
+  uint16_t checksum = 0;
+  const uint8_t* bytes = static_cast<const uint8_t*>(data);
+
+  // バイト列を2バイトずつ加算
+  for (size_t i = start; i < size; i += 2)
+  {
+    checksum += (bytes[i] << 8) | bytes[i+1];
+  }
+
+  // キャリーがあった場合は回収
+  checksum = (checksum & 0xFFFF) + (checksum >> 16);
+
+  // チェックサムを反転
+  return ~checksum;
+}
+
 // 後で実装するかも
 void serial_send_cmd()
 {
@@ -191,17 +219,14 @@ void serial_send_cmd()
 void UDP_send_string_cmd()
 {
   std::cout << "UDP_send_string_cmd" << std::endl;
-  std::cout << "send cmd: " << send_str << std::endl;
   UDP_send_time = ros::Time::now();
-  string sn1 = to_string(target_rpm_l);
-  string sn2 = to_string(target_rpm_r);
-  string send_data = sn1 + "," + sn2 + "\n";
+  string send_data = to_string(target_rpm_l) + "," + to_string(target_rpm_r) + "\n";
   sendto(sock, send_data.c_str(), send_data.length(), 0, (struct sockaddr *)&addr, sizeof(addr));
 }
 
 void UDP_send_cmd()
 {
-  unsigned char byte_data[UDP_BUFF];
+  unsigned char byte_data[UDP_BUFF_SIZE];
   memset(byte_data, 0x00, sizeof(byte_data));
 
   const unsigned char HEAD = 0xFF;
@@ -213,13 +238,41 @@ void UDP_send_cmd()
   std::memcpy(byte_data + 1, target_rpm_l_ptr, sizeof(float));
   std::memcpy(byte_data + 5, target_rpm_l_ptr, sizeof(float));
 
-  float data[] = {target_rpm_l, target_rpm_r};
-  std::cout << target_rpm_l << ", " << target_rpm_r << std::endl;
+  // チェックサムを計算
+  uint16_t checksum = calculateChecksum(byte_data, UDP_BUFF_SIZE);
+  printf("send calc_checksum: %x\n", checksum);
+
+  // UPDパケットを作成
+  UdpHeader header;
+  header.sourcePort = 0;
+  header.destinationPort = htons(arduino_port);
+  header.length = sizeof(UdpHeader) + sizeof(byte_data);
+  header.checksum = checksum;
+
+  unsigned char* packet = new unsigned char[header.length];
+  size_t offset = 0;
+
+  memcpy(packet + offset, &header.sourcePort, sizeof(header.sourcePort));
+  offset += sizeof(header.sourcePort);
+
+  memcpy(packet + offset, &header.destinationPort, sizeof(header.destinationPort));
+  offset += sizeof(header.destinationPort);
+
+  memcpy(packet + offset, &header.length, sizeof(header.length));
+  offset += sizeof(header.length);
+
+  memcpy(packet + offset, &header.checksum, sizeof(header.checksum));
+  offset += sizeof(header.checksum);
+
+  memcpy(packet + offset, (unsigned char*) byte_data, sizeof(byte_data));
+  std::cout << "offset: " << offset << std::endl;
+
   UDP_send_time = ros::Time::now();
-  //int send_len = sendto(sock, (unsigned char*) data, sizeof data, 0, (struct sockaddr *)&addr, sizeof(addr));
-  int send_len = sendto(sock, (unsigned char*) byte_data, sizeof byte_data, 0, (struct sockaddr *)&addr, sizeof(addr));
-  //sendto(sock, (unsigned char*) data, sizeof data, 0, (struct sockaddr *)&addr, sizeof(addr));
+  // UDPパケットを送信
+  int send_len = sendto(sock, (unsigned char*) packet, header.length, 0, (struct sockaddr *)&addr, sizeof(addr));
   std::cout << "send_len: " << send_len << std::endl;
+  std::cout << "header.length: " << header.length << std::endl;
+  delete[] packet;
 }
 
 // 後で実装するかも
@@ -305,7 +358,6 @@ void twist2rpm()
 void check_stop_cmd_vel()
 {
   std::cout << "\ncheck_stop_cmdvel" << std::endl;
-  //ros::Duration subscribe_duration = ros::Time::now() - subscribe_time;
   float subscribe_duration = (ros::Time::now() - subscribe_time).toSec();
   if(subscribe_duration > ((float)stop_motor_time / 1000)) {
     std::cout << "/cmd_vel disconnect...\nset target rpm 0.0" << std::endl;
@@ -317,10 +369,6 @@ void check_stop_cmd_vel()
 void send_rpm_MCU()
 {
   std::cout << "\nsend_rpm_MCU" << std::endl;
-  // create send data
-  string send_data = to_string(target_rpm_l) + "," + to_string(target_rpm_r) + "\n";
-  std::cout << send_data << std::endl;
-
   // binary
   UDP_send_cmd();
   // string
@@ -329,23 +377,38 @@ void send_rpm_MCU()
 
 void recv_count_MCU()
 {
-  // TODO settimeout周り
-
-  char buf[UDP_BUFF];
+  char buf[UDP_HEADER_SIZE + UDP_BUFF_SIZE];
   memset(buf, 0, sizeof(buf));
-  int n = recv(sock, buf, sizeof(buf), 0);
-  if(n < 1) {
+  int recv_len = recv(sock, buf, sizeof(buf), 0);
+  std::cout << "recv_len: " << recv_len << std::endl;
+  if(recv_len < 0) {
     if (errno == EAGAIN) {
       printf("data does not achieved yet\n");
+      perror("Timeout");
     }
     else{
       perror("recv");
     }
   }else{
     printf("-------received data-------\n");
-    for(int i=0;i<UDP_BUFF;i++){
+    printf("header\n");
+    for(int i=0;i<UDP_HEADER_SIZE;i++){
       printf("%3hhu ", buf[i]);
-      if((i+1)%16==0) printf("\n");
+    }
+    printf("\n");
+    printf("data\n");
+    for(int i=UDP_HEADER_SIZE;i<UDP_BUFF_SIZE;i++){
+      printf("%3hhu ", buf[i]);
+      if((i+1)%8==0) printf("\n");
+    }
+    printf("\n");
+
+    uint16_t recv_checksum = (*(uint16_t*)(buf+6));
+    uint16_t calc_checksum = calculateChecksum(buf, recv_len, UDP_HEADER_SIZE);
+
+    if(recv_checksum != calc_checksum) {
+      std::cerr << "Packet integrity check failed" << std::endl;
+      return;
     }
 
     // ベクトル計算用の時間を計測
@@ -353,13 +416,11 @@ void recv_count_MCU()
     recv_time = ros::Time::now();
 
     // floatで読み出し
-    recv_encoder_l = *reinterpret_cast<float*>(buf + 1);
-    recv_encoder_r = *reinterpret_cast<float*>(buf + 5);
+    recv_encoder_l = *reinterpret_cast<float*>(buf + UDP_HEADER_SIZE + 1);
+    recv_encoder_r = *reinterpret_cast<float*>(buf + UDP_HEADER_SIZE + 5);
 
     std::cout << "recv_encoder: " << recv_encoder_l << ", " << recv_encoder_r << std::endl;
   }
-
-  // タイムアウト設定時間を戻す
 }
 
 void odom_publish()
@@ -399,29 +460,38 @@ int main(int argc, char **argv)
   ros::NodeHandle nh;
 
   odom_pub = nh.advertise<nav_msgs::Odometry>("odom", 10);
-
   cmd_vel_sub = nh.subscribe("/cmd_vel", 10, cmd_vel_callback);
-
-  read_params(nh);
 
   ros::Rate loop_rate(10);
 
-  init_time();
-  init_UDP();
+  try {
+    read_params(nh);
 
-  while (ros::ok())
-  {
-    check_stop_cmd_vel();
-    twist2rpm();
-    send_rpm_MCU();
-    recv_count_MCU();
-    count2twist();
-    odom_publish();
-    ros::spinOnce();
-    loop_rate.sleep();
+    init_time();
+    init_UDP();
+
+    while (ros::ok())
+    {
+      check_stop_cmd_vel();
+      twist2rpm();
+      send_rpm_MCU();
+      recv_count_MCU();
+      count2twist();
+      odom_publish();
+      ros::spinOnce();
+      loop_rate.sleep();
+    }
+
+    node_shutdown();
   }
-
-  node_shutdown();
+  catch (const std::exception &e) {
+    std::cerr << e.what() << std::endl;
+    node_shutdown();
+  }
+  catch (const ros::Exception &e) {
+    ROS_ERROR("Error occured: %s ", e.what());
+    node_shutdown();
+  }
 
   return 0;
 }
