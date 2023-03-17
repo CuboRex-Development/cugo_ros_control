@@ -97,20 +97,51 @@ void cmd_vel_callback(const geometry_msgs::Twist &msg)
   subscribe_time = ros::Time::now();
 }
 
-void publish()
-{
-  // odom_quatの計算
-  // sendTransform
-  // odom_msg作成
-  // view_odom();
-  // publish(odom)
-}
-
 void view_odom()
 {
   std::cout << "in_twist: " << vector_v << ", " << vector_omega << std::endl;
   std::cout << "out_twist: " << odom_twist_x << ", " << odom_twist_yaw << std::endl;
   std::cout << "odom: " << odom_x << ", " << odom_y << ", " << odom_yaw << std::endl;
+}
+
+void publish()
+{
+  static tf::TransformBroadcaster odom_broadcaster;
+  geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(odom_yaw);
+
+  // TODO roslaunch
+  geometry_msgs::TransformStamped odom_trans;
+  odom_trans.header.stamp = recv_time;
+  odom_trans.header.frame_id = "odom";
+  odom_trans.child_frame_id = "base_link";
+
+  odom_trans.transform.translation.x = odom_x;
+  odom_trans.transform.translation.y = odom_y;
+  odom_trans.transform.translation.z = 0.0;
+  odom_trans.transform.rotation = odom_quat;
+
+  // send the transform
+  odom_broadcaster.sendTransform(odom_trans);
+
+  // odom_msg作成
+  nav_msgs::Odometry odom;
+  odom.header.stamp = recv_time;
+  odom.header.frame_id = "odom";
+
+  // set the position
+  odom.pose.pose.position.x = odom_x;
+  odom.pose.pose.position.y = odom_y;
+  odom.pose.pose.position.z = 0.0;
+  odom.pose.pose.orientation = odom_quat;
+
+  // set the velocity
+  odom.child_frame_id = "base_link";
+  odom.twist.twist.linear.x = odom_twist_x;
+  odom.twist.twist.linear.y = odom_twist_y;
+  odom.twist.twist.angular.z = odom_twist_yaw;
+
+  view_odom();
+  odom_pub.publish(odom);
 }
 
 void view_init()
