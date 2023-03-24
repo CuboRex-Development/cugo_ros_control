@@ -22,6 +22,7 @@
 #include <sys/ioctl.h>
 #include <unistd.h>
 #include <arpa/inet.h>
+#include <errno.h>
 
 class CugoController {
   private:
@@ -37,20 +38,22 @@ class CugoController {
     const int UDP_HEADER_SIZE = 8;
 
     // parameters
-    std::string device_name = "/dev/Arduino";
-    int baudrate       = 115200;
-    float timeout        = 0.05;  // 10hzで回す場合
-    float wheel_radius_l = 0.03858;   //初期値はCuGO V3の値
-    float wheel_radius_r = 0.03858;   //初期値はCuGO V3の値
-    float reduction_ratio = 1.0;      //初期値はCuGo V3の値
-    float tread           = 0.635;     //CuGO MEGAの値
-    int encoder_resolution = 2048;
-    int encoder_max    = 2147483647; // -2147483648 ~ 2147483647(Arduinoのlong intは32bit)
-    int stop_motor_time = 500; //NavigationやコントローラからSubscriberできなかったときにモータを>止めるまでの時間(ms)
+    //std::string device_name = "/dev/ttyUSB0";
+    //int baudrate       = 115200;
+    float timeout;
+    float wheel_radius_l;
+    float wheel_radius_r;
+    float reduction_ratio;
+    float tread;
+    int encoder_resolution;
+    int encoder_max; // -2147483648 ~ 2147483647(Arduinoのlong intは32bit)
     //std::string arduino_addr = "192.168.8.216";
-    std::string arduino_addr = "127.0.0.1";
+    std::string arduino_addr = "127.0.0.1"; // テスト用
     int arduino_port = 8888;
+    std::string odom_frame_id;
+    std::string odom_child_frame_id;
 
+    int stop_motor_time = 500; //NavigationやコントローラからSubscriberできなかったときにモータを>止めるまでの時間(ms)
     int not_recv_cnt   = 0;
     std::string send_str = "";
     std::string recv_str = "";
@@ -75,7 +78,9 @@ class CugoController {
     float vx_dt = 0.0;
     float vy_dt = 0.0;
     float theta_dt = 0.0;
-    bool start_serial_comm = false;
+
+    // serial
+    //bool start_serial_comm = false;
 
     // UDP
     int sock;
@@ -89,11 +94,11 @@ class CugoController {
     ros::Subscriber cmd_vel_sub;
     ros::Publisher odom_pub;
 
-    void cmd_vel_callback();
+    void cmd_vel_callback(const geometry_msgs::Twist&);
     uint16_t calculate_checksum(const void*, size_t, size_t);
     float check_overflow(float, float);
     void calc_odom();
-    void serial_send_cmd();
+    //void serial_send_cmd();
     void UDP_send_string_cmd();
     void UDP_send_cmd();
     void publish();
@@ -101,15 +106,17 @@ class CugoController {
   public:
     CugoController(ros::NodeHandle);
     ~CugoController();
+
     void view_odom();
     void view_init();
-    void init_serial();
+
+    //void init_serial();
     void init_time();
     void init_UDP();
     void close_UDP();
-    void serial_reciev_state();
+    //void serial_reciev_state();
     void count2twist();
-    void calc_count_to_vec();
+    //void calc_count_to_vec();
     void twist2rpm();
     void check_stop_cmd_vel();
     void send_rpm_MCU();
