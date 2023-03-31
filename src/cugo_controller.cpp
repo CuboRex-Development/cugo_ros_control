@@ -14,7 +14,8 @@ CugoController::CugoController(ros::NodeHandle nh) {
   nh.param("reduction_ratio", reduction_ratio, (float)1.0); // default: CuGO V3
   nh.param("encoder_resolution", encoder_resolution, 2048);
   nh.param("encoder_max", encoder_max, 2147483647); // -2147483648 ~ 2147483647(Arduinoのlong intは32bit)
-  nh.param("arduino_addr", arduino_addr, std::string("192.168.8.216"));
+  //nh.param("arduino_addr", arduino_addr, std::string("192.168.8.216"));
+  nh.param("arduino_addr", arduino_addr, std::string("127.0.0.1")); // for test
   nh.param("arduino_port", arduino_port, 8888);
   nh.param("odom_frame_id", odom_frame_id, std::string("odom"));
   nh.param("odom_child_frame_id", odom_child_frame_id, std::string("base_link"));
@@ -99,49 +100,100 @@ void CugoController::UDP_send_string_cmd()
   sendto(sock, send_data.c_str(), send_data.length(), 0, (struct sockaddr *)&addr, sizeof(addr));
 }
 
+void CugoController::create_UDP_packet(unsigned char* packet, CugoController::UdpHeader* header, unsigned char* body)
+{
+  size_t offset = 0;
+
+  // パケットへheaderの書き込み
+  memcpy(packet + offset, &header->sourcePort, sizeof(header->sourcePort));
+  offset += sizeof(header->sourcePort);
+  memcpy(packet + offset, &header->destinationPort, sizeof(header->destinationPort));
+  offset += sizeof(header->destinationPort);
+  memcpy(packet + offset, &header->length, sizeof(header->length));
+  offset += sizeof(header->length);
+  memcpy(packet + offset, &header->checksum, sizeof(header->checksum));
+  offset += sizeof(header->checksum);
+
+  // パケットへbodyの書き込み
+  memcpy(packet + offset, body, sizeof(unsigned char)*UDP_BUFF_SIZE);
+}
+
+void CugoController::write_float_to_buf(unsigned char* buf, const int TARGET, float val)
+{
+  unsigned char* val_ptr = reinterpret_cast<unsigned char*>(&val);
+  std::memcpy(buf + TARGET, val_ptr, sizeof(float));
+}
+
+void CugoController::write_int_to_buf(unsigned char* buf, const int TARGET, int val)
+{
+  unsigned char* val_ptr = reinterpret_cast<unsigned char*>(&val);
+  std::memcpy(buf + TARGET, val_ptr, sizeof(int));
+}
+
+void CugoController::write_bool_to_buf(unsigned char* buf, const int TARGET, bool val)
+{
+  unsigned char* val_ptr = reinterpret_cast<unsigned char*>(&val);
+  std::memcpy(buf + TARGET, val_ptr, sizeof(bool));
+}
+
+float CugoController::read_float_from_buf(unsigned char* buf, const int TARGET)
+{
+  float val = *reinterpret_cast<float*>(buf + UDP_HEADER_SIZE + TARGET);
+  return val;
+}
+
+int CugoController::read_int_from_buf(unsigned char* buf, const int TARGET)
+{
+  int val = *reinterpret_cast<int*>(buf + UDP_HEADER_SIZE + TARGET);
+  return val;
+}
+
+bool CugoController::read_bool_from_buf(unsigned char* buf, const int TARGET)
+{
+  bool val = *reinterpret_cast<bool*>(buf + UDP_HEADER_SIZE + TARGET);
+  return val;
+}
+
+
 void CugoController::UDP_send_cmd()
 {
   // bodyデータ用バッファの作成
   unsigned char body[UDP_BUFF_SIZE];
+  // バッファの初期化
   memset(body, 0x00, sizeof(body));
 
-  unsigned char* target_rpm_l_ptr = reinterpret_cast<unsigned char*>(&target_rpm_l);
-  unsigned char* target_rpm_r_ptr = reinterpret_cast<unsigned char*>(&target_rpm_r);
+  // float変数をバイト列に変換
+  //unsigned char* target_rpm_l_ptr = reinterpret_cast<unsigned char*>(&target_rpm_l);
+  //unsigned char* target_rpm_r_ptr = reinterpret_cast<unsigned char*>(&target_rpm_r);
+
+  // TODO バッファへのbodyデータの書き込み
+  //std::memcpy(body + TARGET_RPM_L_PTR, target_rpm_l_ptr, sizeof(float));
+  //std::memcpy(body + TARGET_RPM_R_PTR, target_rpm_r_ptr, sizeof(float));
 
   // バッファへのbodyデータの書き込み
-  std::memcpy(body + 1, target_rpm_l_ptr, sizeof(float));
-  std::memcpy(body + 5, target_rpm_l_ptr, sizeof(float));
+  write_float_to_buf(body, TARGET_RPM_L_PTR, target_rpm_l);
+  write_float_to_buf(body, TARGET_RPM_R_PTR, target_rpm_r);
 
   // チェックサムを計算
   uint16_t checksum = calculate_checksum(body, UDP_BUFF_SIZE);
   printf("send calc_checksum: %x\n", checksum);
 
-  // UPDパケットを作成
+  // UDP headerの作成
   UdpHeader header;
-  header.sourcePort = 0;
+  header.sourcePort = 0; // TODO
   header.destinationPort = htons(arduino_port);
   header.length = sizeof(UdpHeader) + sizeof(body);
   header.checksum = checksum;
 
+  // UDPパケットの作成
   unsigned char* packet = new unsigned char[header.length];
-  size_t offset = 0;
-  // パケットへheaderの書き込み
-  memcpy(packet + offset, &header.sourcePort, sizeof(header.sourcePort));
-  offset += sizeof(header.sourcePort);
-  memcpy(packet + offset, &header.destinationPort, sizeof(header.destinationPort));
-  offset += sizeof(header.destinationPort);
-  memcpy(packet + offset, &header.length, sizeof(header.length));
-  offset += sizeof(header.length);
-  memcpy(packet + offset, &header.checksum, sizeof(header.checksum));
-  offset += sizeof(header.checksum);
+  create_UDP_packet(packet, &header, body);
 
-  // パケットへ送信データ本体の書き込み
-  memcpy(packet + offset, (unsigned char*) body, sizeof(body));
-  std::cout << "offset: " << offset << std::endl;
-
+  // UDPパケットの送信
   UDP_send_time = ros::Time::now();
-  // send UDP packet
   int send_len = sendto(sock, (unsigned char*) packet, header.length, 0, (struct sockaddr *)&addr, sizeof(addr));
+
+  // TODO errnoによるエラー処理
   std::cout << "send_len: " << send_len << std::endl;
   std::cout << "header.length: " << header.length << std::endl;
   delete[] packet;
@@ -212,8 +264,9 @@ void CugoController::init_time()
 void CugoController::init_UDP()
 {
   sock = socket(AF_INET, SOCK_DGRAM, 0);
-  addr.sin_family = AF_INET;
+  addr.sin_family = AF_INET; // IPv4
   addr.sin_port = htons(arduino_port);
+  addr.sin_addr.s_addr = inet_addr(arduino_addr.c_str()); // INADDR_ANYの場合すべてのアドレスからのパケットを受信する
 
   struct timeval tv;
   tv.tv_sec = timeout;
@@ -306,14 +359,15 @@ void CugoController::send_rpm_MCU()
 
 void CugoController::recv_count_MCU()
 {
-  char buf[UDP_HEADER_SIZE + UDP_BUFF_SIZE];
+  unsigned char buf[UDP_HEADER_SIZE + UDP_BUFF_SIZE];
   memset(buf, 0, sizeof(buf));
 
   // 受信
   int recv_len = recv(sock, buf, sizeof(buf), 0);
+  int errsv = errno;
   std::cout << "recv_len: " << recv_len << std::endl;
   if(recv_len <= 0) {
-    if (errno == EAGAIN) {
+    if (errsv == EAGAIN || errsv == EWOULDBLOCK) {
       printf("data does not achieved yet\n");
       perror("Timeout");
     }
@@ -354,8 +408,11 @@ void CugoController::recv_count_MCU()
 
     // floatで読み出し
     // TODO 即値を消す
-    recv_encoder_l = *reinterpret_cast<float*>(buf + UDP_HEADER_SIZE + 1);
-    recv_encoder_r = *reinterpret_cast<float*>(buf + UDP_HEADER_SIZE + 5);
+    //recv_encoder_l = *reinterpret_cast<float*>(buf + UDP_HEADER_SIZE + RECV_ENCODER_L_PTR);
+    //recv_encoder_r = *reinterpret_cast<float*>(buf + UDP_HEADER_SIZE + RECV_ENCODER_R_PTR);
+
+    recv_encoder_l = read_float_from_buf(buf, RECV_ENCODER_L_PTR);
+    recv_encoder_r = read_float_from_buf(buf, RECV_ENCODER_R_PTR);
 
     std::cout << "recv_encoder: " << recv_encoder_l << ", " << recv_encoder_r << std::endl;
   }

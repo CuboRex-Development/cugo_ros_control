@@ -24,6 +24,12 @@
 #include <arpa/inet.h>
 #include <errno.h>
 
+#define TARGET_RPM_L_PTR 0
+#define TARGET_RPM_R_PTR 4
+
+#define RECV_ENCODER_L_PTR 0
+#define RECV_ENCODER_R_PTR 4
+
 class CugoController {
   private:
     struct UdpHeader
@@ -99,6 +105,13 @@ class CugoController {
     float check_overflow(float, float);
     void calc_odom();
     //void serial_send_cmd();
+    void create_UDP_packet(unsigned char*, CugoController::UdpHeader*, unsigned char*);
+    void write_float_to_buf(unsigned char*, const int, float);
+    void write_int_to_buf(unsigned char*, const int, int);
+    void write_bool_to_buf(unsigned char*, const int, bool);
+    float read_float_from_buf(unsigned char*, const int);
+    int read_int_from_buf(unsigned char*, const int);
+    bool read_bool_from_buf(unsigned char*, const int);
     void UDP_send_string_cmd();
     void UDP_send_cmd();
     void publish();
