@@ -14,19 +14,22 @@
 // cpp
 #include <iostream>
 #include <string>
+#include <errno.h>
 #include <math.h>
-#include <time.h>
-#include <stdlib.h>
 #include <sys/types.h>
+#include <time.h>
+#include <unistd.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
-#include <unistd.h>
 #include <arpa/inet.h>
-#include <errno.h>
+
+#define UDP_BUFF_SIZE 64
+#define UDP_HEADER_SIZE 8
 
 #define TARGET_RPM_L_PTR 0
 #define TARGET_RPM_R_PTR 4
 
+#define RECV_HEADER_CHECKSUM_PTR 6
 #define RECV_ENCODER_L_PTR 0
 #define RECV_ENCODER_R_PTR 4
 
@@ -39,9 +42,6 @@ class CugoController {
       uint16_t length;
       uint16_t checksum;
     };
-
-    const int UDP_BUFF_SIZE = 64;
-    const int UDP_HEADER_SIZE = 8;
 
     // parameters
     //std::string device_name = "/dev/ttyUSB0";

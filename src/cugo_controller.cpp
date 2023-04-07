@@ -15,6 +15,7 @@ CugoController::CugoController(ros::NodeHandle nh) {
   nh.param("encoder_resolution", encoder_resolution, 2048);
   nh.param("encoder_max", encoder_max, 2147483647); // -2147483648 ~ 2147483647(Arduinoのlong intは32bit)
   //nh.param("arduino_addr", arduino_addr, std::string("192.168.8.216"));
+  //nh.param("arduino_addr", arduino_addr, std::string("192.168.8.216")); // for test
   nh.param("arduino_addr", arduino_addr, std::string("127.0.0.1")); // for test
   nh.param("arduino_port", arduino_port, 8888);
   nh.param("odom_frame_id", odom_frame_id, std::string("odom"));
@@ -180,7 +181,7 @@ void CugoController::UDP_send_cmd()
 
   // UDP headerの作成
   UdpHeader header;
-  header.sourcePort = 0; // TODO
+  header.sourcePort = 8888; // TODO
   header.destinationPort = htons(arduino_port);
   header.length = sizeof(UdpHeader) + sizeof(body);
   header.checksum = checksum;
@@ -194,6 +195,78 @@ void CugoController::UDP_send_cmd()
   int send_len = sendto(sock, (unsigned char*) packet, header.length, 0, (struct sockaddr *)&addr, sizeof(addr));
 
   // TODO errnoによるエラー処理
+  //int errsv = errno;
+  //if (errsv == EAGAIN || errsv == EWOULDBLOCK) {
+  //  printf("data does not achieved yet\n");
+  //  perror("Timeout: send");
+  //  // TODO ROS_ERRORでlogをとる
+  //  ROS_ERROR("send_err EAGAIN or EWOULDBLOCK, errno: %i", errsv);
+  //}
+  //else if (errsv == EALREADY) {
+  //  perror("EALREADY");
+  //  ROS_ERROR("send_err EALREADY, errno: %i", errsv);
+  //}
+  //else if (errsv == EBADF) {
+  //  perror("EBADF");
+  //  ROS_ERROR("send_err EBADF, errno: %i", errsv);
+  //}
+  //else if (errsv == ECONNRESET) {
+  //  perror("ECONNRESET");
+  //  ROS_ERROR("send_err ECONNRESET, errno: %i", errsv);
+  //}
+  //else if (errsv == EDESTADDRREQ) {
+  //  perror("EDESTADDRREQ");
+  //  ROS_ERROR("send_err EDESTADDRREQ, errno: %i", errsv);
+  //}
+  //else if (errsv == EFAULT) {
+  //  perror("EFAULT");
+  //  ROS_ERROR("send_err EFAULT, errno: %i", errsv);
+  //}
+  //else if (errsv == EINTR) {
+  //  perror("EINTR");
+  //  ROS_ERROR("send_err EINTR, errno: %i", errsv);
+  //}
+  //else if (errsv == EINVAL) {
+  //  perror("EINVAL");
+  //  ROS_ERROR("send_err EINVAL, errno: %i", errsv);
+  //}
+  //else if (errsv == EISCONN) {
+  //  perror("EISCONN");
+  //  ROS_ERROR("send_err EISCONN, errno: %i", errsv);
+  //}
+  //else if (errsv == EMSGSIZE) {
+  //  perror("EMSGSIZE");
+  //  ROS_ERROR("send_err EMSGSIZE, errno: %i", errsv);
+  //}
+  //else if (errsv == ENOBUFS) {
+  //  perror("ENOBUFFS");
+  //  ROS_ERROR("send_err ENOBUFS, errno: %i", errsv);
+  //}
+  //else if (errsv == ENOMEM) {
+  //  perror("ENOMEM");
+  //  ROS_ERROR("send_err ENOMEM, errno: %i", errsv);
+  //}
+  //else if (errsv == ENOTCONN) {
+  //  perror("ENOTCONN");
+  //  ROS_ERROR("send_err ENOTCONN, errno: %i", errsv);
+  //}
+  //else if (errsv == ENOTSOCK) {
+  //  perror("ENOTSOCK");
+  //  ROS_ERROR("send_err ENOTSOCK, errno: %i", errsv);
+  //}
+  //else if (errsv == EOPNOTSUPP) {
+  //  perror("EOPNOTSUPP");
+  //  ROS_ERROR("send_err EOPNOTSUPP, errno: %i", errsv);
+  //}
+  //else if (errsv == EPIPE) {
+  //  perror("EPIPE");
+  //  ROS_ERROR("send_err EPIPE, errno: %i", errsv);
+  //}
+  //else {
+  //  perror("other error");
+  //  ROS_ERROR("send_err errno: %i", errsv);
+  //}
+
   std::cout << "send_len: " << send_len << std::endl;
   std::cout << "header.length: " << header.length << std::endl;
   delete[] packet;
@@ -267,6 +340,7 @@ void CugoController::init_UDP()
   addr.sin_family = AF_INET; // IPv4
   addr.sin_port = htons(arduino_port);
   addr.sin_addr.s_addr = inet_addr(arduino_addr.c_str()); // INADDR_ANYの場合すべてのアドレスからのパケットを受信する
+ // addr.sin_addr.s_addr = INADDR_ANY; // INADDR_ANYの場合すべてのアドレスからのパケットを受信する
 
   struct timeval tv;
   tv.tv_sec = timeout;
@@ -370,9 +444,45 @@ void CugoController::recv_count_MCU()
     if (errsv == EAGAIN || errsv == EWOULDBLOCK) {
       printf("data does not achieved yet\n");
       perror("Timeout");
+      // TODO ROS_ERRORでlogをとる
+      ROS_ERROR("recv_err EAGAIN or EWOULDBLOCK, errno: %i", errsv);
+    }
+    else if (errsv == EBADF) {
+      perror("Invalid socket");
+      ROS_ERROR("recv_err EBADF, errno: %i", errsv);
+    }
+    else if (errsv == ECONNREFUSED) {
+      perror("Refused Network Connection");
+      ROS_ERROR("recv_err ECONNREFUSED, errno: %i", errsv);
+    }
+    else if (errsv == EFAULT) {
+      perror("EFAULT");
+      ROS_ERROR("recv_err EFAULT, errno: %i", errsv);
+    }
+    else if (errsv == EINTR) {
+      perror("EINTR");
+      ROS_ERROR("recv_err EINTR, errno: %i", errsv);
+    }
+    else if (errsv == EINVAL) {
+      perror("EINVAL: Invalid Argument");
+      ROS_ERROR("recv_err EINVAL, errno: %i", errsv);
+    }
+    else if (errsv == ENOMEM) {
+      perror("ENOMEM");
+      ROS_ERROR("recv_err ENOMEM, errno: %i", errsv);
+    }
+    else if (errsv == ENOTCONN) {
+      perror("ENOTCONN: socket is not connected");
+      ROS_ERROR("recv_err ENOTCONN, errno: %i", errsv);
+    }
+    else if (errsv == ENOTSOCK) {
+      perror("ENOTSOCK");
+      ROS_ERROR("recv_err ENOTSOCK, errno: %i", errsv);
     }
     else{
-      perror("recv");
+      perror("other recv error");
+      ROS_ERROR("recv_err errno: %i", errsv);
+      // errsv(==errno)の値表示をする
     }
     // TODO 異常値の格納
   }
@@ -393,7 +503,8 @@ void CugoController::recv_count_MCU()
     }
     printf("\n");
 
-    uint16_t recv_checksum = (*(uint16_t*)(buf+6));
+    // TODO 即値の置換
+    uint16_t recv_checksum = (*(uint16_t*)(buf+RECV_HEADER_CHECKSUM_PTR));
     uint16_t calc_checksum = calculate_checksum(buf, recv_len, UDP_HEADER_SIZE);
 
     if(recv_checksum != calc_checksum) {
