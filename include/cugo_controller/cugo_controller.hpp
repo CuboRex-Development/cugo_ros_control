@@ -53,16 +53,13 @@ class CugoController {
     float tread;
     int encoder_resolution;
     int encoder_max; // -2147483648 ~ 2147483647(Arduinoのlong intは32bit)
-    //std::string arduino_addr = "192.168.8.216";
-    std::string arduino_addr = "127.0.0.1"; // テスト用
+    std::string arduino_addr = "192.168.8.216";
+    //std::string arduino_addr = "127.0.0.1"; // テスト用
     int arduino_port = 8888;
     std::string odom_frame_id;
     std::string odom_child_frame_id;
 
     int stop_motor_time = 500; //NavigationやコントローラからSubscriberできなかったときにモータを>止めるまでの時間(ms)
-    int not_recv_cnt   = 0;
-    std::string send_str = "";
-    std::string recv_str = "";
 
     float vector_v       = 0.0;
     float vector_omega   = 0.0;
@@ -112,6 +109,7 @@ class CugoController {
     float read_float_from_buf(unsigned char*, const int);
     int read_int_from_buf(unsigned char*, const int);
     bool read_bool_from_buf(unsigned char*, const int);
+    uint16_t read_uint16_t_from_header(unsigned char*, const int);
     void UDP_send_string_cmd();
     void UDP_send_cmd();
     void publish();
@@ -122,6 +120,8 @@ class CugoController {
 
     void view_odom();
     void view_init();
+    void view_send_error();
+    void view_recv_error();
 
     //void init_serial();
     void init_time();
