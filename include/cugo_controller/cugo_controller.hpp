@@ -85,6 +85,19 @@ class CugoController {
     // serial
     //bool start_serial_comm = false;
 
+    int recv_err_count = 0;
+    int checksum_err_count = 0;
+    int diff_err_count = 0;
+
+    // 故障代替値
+    float alt_recv_encoder_l = 0.0;
+    float alt_recv_encoder_r = 0.0;
+    float alt_odom_x = 0.0;
+    float alt_odom_y = 0.0;
+    float alt_odom_yaw = 0.0;
+    float alt_odom_twist_x = 0.0;
+    float alt_odom_twist_yaw = 0.0;
+
     // UDP
     int sock;
     struct sockaddr_in addr;
@@ -113,6 +126,7 @@ class CugoController {
     void UDP_send_string_cmd();
     void UDP_send_cmd();
     void publish();
+    void check_communication();
 
   public:
     CugoController(ros::NodeHandle);
@@ -131,6 +145,7 @@ class CugoController {
     void count2twist();
     //void calc_count_to_vec();
     void twist2rpm();
+    void check_failsafe();
     void check_stop_cmd_vel();
     void send_rpm_MCU();
     void recv_count_MCU();

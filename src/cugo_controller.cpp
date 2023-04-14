@@ -16,8 +16,8 @@ CugoController::CugoController(ros::NodeHandle nh)
   nh.param("encoder_resolution", encoder_resolution, 2048);
   nh.param("encoder_max", encoder_max, 2147483647); // -2147483648 ~ 2147483647(Arduinoのlong intは32bit)
   //nh.param("arduino_addr", arduino_addr, std::string("192.168.8.216"));
-  //nh.param("arduino_addr", arduino_addr, std::string("192.168.8.216")); // for test
-  nh.param("arduino_addr", arduino_addr, std::string("127.0.0.1")); // for test
+  nh.param("arduino_addr", arduino_addr, std::string("192.168.8.216")); // for test
+  //nh.param("arduino_addr", arduino_addr, std::string("127.0.0.1")); // for test
   nh.param("arduino_port", arduino_port, 8888);
   nh.param("odom_frame_id", odom_frame_id, std::string("odom"));
   nh.param("odom_child_frame_id", odom_child_frame_id, std::string("base_link"));
@@ -68,7 +68,7 @@ uint16_t CugoController::calculate_checksum(const void* data, size_t size, size_
 
 float CugoController::check_overflow(float diff_, float max_)
 {
-  std::cout << "check_overflow\n";
+  std::cout << "check_overflow" << std::endl;;
   // upper limit
   if (diff_ > max_ * 0.9) {
     diff_ = diff_ - max_ * 2;
@@ -90,6 +90,11 @@ void CugoController::calc_odom()
   odom_x += vx_dt * cos(odom_yaw) - vy_dt * sin(odom_yaw);
   odom_y += vx_dt * sin(odom_yaw) - vy_dt * cos(odom_yaw);
   odom_yaw += theta_dt;
+
+  // 故障代替値の更新
+  alt_odom_x = odom_x;
+  alt_odom_y = odom_y;
+  alt_odom_yaw = odom_yaw;
 }
 
 //void CugoController::serial_send_cmd()
@@ -257,14 +262,12 @@ void CugoController::view_init()
 void CugoController::view_send_error()
 {
   int errsv = errno;
-  //if (errsv == EAGAIN || errsv == EWOULDBLOCK)
-  //{
-  //  printf("data does not achieved yet\n");
-  //  perror("Timeout: send");
-  //  ROS_ERROR("send_err EAGAIN or EWOULDBLOCK, errno: %i", errsv);
-  //}
-  //else
-  if (errsv == EALREADY)
+  if (errsv == EAGAIN || errsv == EWOULDBLOCK)
+  {
+    perror("EAGAIN or EWOULDBLOCK");
+    ROS_ERROR("send_err EAGAIN or EWOULDBLOCK, errno: %i", errsv);
+  }
+  else if (errsv == EALREADY)
   {
     perror("EALREADY");
     ROS_ERROR("send_err EALREADY, errno: %i", errsv);
@@ -351,8 +354,7 @@ void CugoController::view_recv_error()
   int errsv = errno;
   if (errsv == EAGAIN || errsv == EWOULDBLOCK)
   {
-    printf("data does not achieved yet\n");
-    perror("Timeout");
+    perror("EAGAIN or EWOULDBLOCK");
     ROS_ERROR("recv_err EAGAIN or EWOULDBLOCK, errno: %i", errsv);
   }
   else if (errsv == EBADF)
@@ -473,6 +475,12 @@ void CugoController::count2twist()
 
     odom_twist_x = vx_dt / diff_time;
     odom_twist_yaw = theta_dt / diff_time;
+
+    // 故障代替値の更新
+    alt_odom_twist_x = odom_twist_x;
+    alt_odom_twist_yaw = odom_twist_yaw;
+
+    diff_err_count = 0;
   }
   else
   {
@@ -488,12 +496,58 @@ void CugoController::count2twist()
 
 void CugoController::twist2rpm()
 {
-  std::cout << "twist2rpm\n";
+  std::cout << "twist2rpm" << std::endl;
   float omega_l = vector_v / wheel_radius_l - tread * vector_omega / (2 * wheel_radius_l);
   float omega_r = vector_v / wheel_radius_r + tread * vector_omega / (2 * wheel_radius_r);
   target_rpm_l = omega_l * 60 / (2 * M_PI);
   target_rpm_r = omega_r * 60 / (2 * M_PI);
   std::cout << target_rpm_l << ", " << target_rpm_r << std::endl;
+}
+
+void CugoController::check_failsafe()
+{
+  check_communication();
+}
+
+void CugoController::check_communication()
+{
+  recv_err_count++;
+  checksum_err_count++;
+  diff_err_count++;
+  // エラーが一定回数連続して確認された場合、故障代替値を格納する
+  // パケットの受信がなかった場合
+  if (recv_err_count > 5)
+  {
+    vector_v = 0.0;
+    vector_omega = 0.0;
+    recv_encoder_l = alt_recv_encoder_l;
+    recv_encoder_r = alt_recv_encoder_r;
+    ROS_ERROR("UDP recv error: Could not receive packet");
+    // エラーカウントのリセット
+    recv_err_count = 0;
+  }
+  // 受信時にチェックサムが一致しなかった場合
+  if (checksum_err_count > 5)
+  {
+    vector_v = 0.0;
+    vector_omega = 0.0;
+    recv_encoder_l = alt_recv_encoder_l;
+    recv_encoder_r = alt_recv_encoder_r;
+    ROS_ERROR("UDP recv error: Packet integrity check failed");
+    // エラーカウントのリセット
+    checksum_err_count = 0;
+  }
+  // 同一時刻のデータ処理が続いた場合
+  if (diff_err_count > 5)
+  {
+    vector_v = 0.0;
+    vector_omega = 0.0;
+    odom_twist_x = alt_odom_twist_x;
+    odom_twist_yaw = alt_odom_twist_yaw;
+    ROS_ERROR("UDP recv error: diff_time zero division error");
+    // エラーカウントのリセット
+    diff_err_count = 0;
+  }
 }
 
 void CugoController::check_stop_cmd_vel()
@@ -523,18 +577,18 @@ void CugoController::recv_count_MCU()
 
   // 受信
   int recv_len = recv(sock, buf, sizeof(buf), 0);
-  //int errsv = errno;
   std::cout << "recv_len: " << recv_len << std::endl;
+  // 受信バッファがない場合
   if (recv_len <= 0)
   {
     view_recv_error();
-    // TODO 異常値の格納
   }
+  // 受信バッファがある場合
   else
   {
     // 受信したパケットの表示
     printf("-------received data-------\n");
-    // ヘッダーの表示
+    // ヘッダの表示
     printf("header\n");
     for(int i=0;i<UDP_HEADER_SIZE;i++)
     {
@@ -550,33 +604,43 @@ void CugoController::recv_count_MCU()
     }
     printf("\n");
 
-    //uint16_t recv_checksum = (*(uint16_t*)(buf+RECV_HEADER_CHECKSUM_PTR));
+    // エラーカウントのリセット
+    recv_err_count = 0;
+
     uint16_t recv_checksum = read_uint16_t_from_header(buf, RECV_HEADER_CHECKSUM_PTR);
     uint16_t calc_checksum = calculate_checksum(buf, recv_len, UDP_HEADER_SIZE);
-
+    // 異常時のフロー
     if (recv_checksum != calc_checksum)
     {
-      std::cerr << "Packet integrity check failed" << std::endl;
-      // TODO 処理の要検討
-      return;
+      ROS_ERROR("Packet integrity check failed");
     }
+    // 正常時のフロー
+    else
+    {
+      // エラーカウントのリセット
+      checksum_err_count = 0;
 
-    // ベクトル計算用の時間を計測
-    last_recv_time = recv_time;
-    recv_time = ros::Time::now();
-    std::cout << "UDP time:" << (recv_time - UDP_send_time) << std::endl; // UDPの一往復の時間を測る
+      // ベクトル計算用の時間を計測
+      last_recv_time = recv_time;
+      recv_time = ros::Time::now();
+      std::cout << "UDP time:" << (recv_time - UDP_send_time) << std::endl; // UDPの一往復の時間を測定
 
-    // floatで読み出し
-    recv_encoder_l = read_float_from_buf(buf, RECV_ENCODER_L_PTR);
-    recv_encoder_r = read_float_from_buf(buf, RECV_ENCODER_R_PTR);
+      // エンコーダ値の読み出し
+      recv_encoder_l = read_float_from_buf(buf, RECV_ENCODER_L_PTR);
+      recv_encoder_r = read_float_from_buf(buf, RECV_ENCODER_R_PTR);
 
-    std::cout << "recv_encoder: " << recv_encoder_l << ", " << recv_encoder_r << std::endl;
+      // 故障代替値の更新
+      alt_recv_encoder_l = recv_encoder_l;
+      alt_recv_encoder_r = recv_encoder_r;
+
+      std::cout << "recv_encoder: " << recv_encoder_l << ", " << recv_encoder_r << std::endl;
+    }
   }
 }
 
 void CugoController::odom_publish()
 {
-  std::cout << "odom_publish\n";
+  std::cout << "odom_publish" << std::endl;;
   calc_odom();
   publish();
 }
@@ -605,6 +669,7 @@ int main(int argc, char **argv)
 
     while (ros::ok())
     {
+      node.check_failsafe();
       node.check_stop_cmd_vel();
       node.twist2rpm();
       node.send_rpm_MCU();
@@ -619,12 +684,12 @@ int main(int argc, char **argv)
   }
   catch (const std::exception &e)
   {
-    std::cerr << "std::exception: " <<  e.what() << std::endl;
+    ROS_ERROR("std::exception error occured: %s ", e.what());
     node.node_shutdown();
   }
   catch (const ros::Exception &e)
   {
-    ROS_ERROR("Error occured: %s ", e.what());
+    ROS_ERROR("ros::Exception error occured: %s ", e.what());
     node.node_shutdown();
   }
 
