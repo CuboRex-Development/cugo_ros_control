@@ -201,8 +201,12 @@ void CugoController::UDP_send_cmd()
   UDP_send_time = ros::Time::now();
   int send_len = sendto(sock, (unsigned char*) packet, header.length, 0, (struct sockaddr *)&addr, sizeof(addr));
 
-  // errnoによるエラー表示
-  view_send_error();
+  // 送信失敗時
+  if (send_len <= 0)
+  {
+    // errnoによるエラー表示
+    view_send_error();
+  }
 
   std::cout << "send_len: " << send_len << std::endl;
   std::cout << "header.length: " << header.length << std::endl;
