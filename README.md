@@ -1,8 +1,11 @@
 # cugo-ros-controller
 
 CuGoをROSで制御する際、ROS開発キットに付属するArduinoに対して制御指令を送り、エンコーダの読み取り結果を受け取るノードです。ROSTopicの/cmd_velをSubscribeし、/odomをPublishします。セットでArduinoドライバと同時に使用します。
+
 Arduinoドライバのリポジトリはこちら： https://github.com/CuboRex-Development/cugo-ros-arduinodriver.git
+
 English Documents here：
+
 正式リリースするまでは、beta branchで管理しますので、そちらをご参照ください。
 
 # Table of Contents
@@ -28,7 +31,7 @@ ROS環境がない場合は[ROS Wiki](http://wiki.ros.org/ja/noetic/Installation
 ROSのワークスペース内でgit cloneしたのち、catkin buildしてください。
 ~~~
 $ cd ~/your/ros_workspace/catkin_ws/src
-$ git clone https://github.com/CuboRex-Development/cugo-ros-controller.git 
+$ git clone https://github.com/CuboRex-Development/cugo-ros-controller.git
 $ cd ../..
 $ catkin build
 $ source ~/your/ros_workspace/catkin_ws/devel/setup.bash
