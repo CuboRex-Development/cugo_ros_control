@@ -134,6 +134,7 @@ class CugoController {
 
     void view_odom();
     void view_init();
+    void view_parameters();
     void view_send_error();
     void view_recv_error();
 
