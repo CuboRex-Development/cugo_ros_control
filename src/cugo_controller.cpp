@@ -11,7 +11,7 @@ CugoController::CugoController(ros::NodeHandle nh)
   nh.param("timeout", timeout, (float)0.05); // default: 10Hz
   nh.param("wheel_radius_l", wheel_radius_l, (float)0.03858); // default: CuGO V3
   nh.param("wheel_radius_r", wheel_radius_r, (float)0.03858); // default: CuGO V3
-  nh.param("tread", tread, (float)0.380); // default: CuGO V3
+  nh.param("tread", tread, (float)0.460); // default: CuGO V3
   nh.param("reduction_ratio", reduction_ratio, (float)1.0); // default: CuGO V3
   nh.param("encoder_resolution", encoder_resolution, 2048);
   nh.param("encoder_max", encoder_max, 2147483647); // -2147483648 ~ 2147483647(Arduinoのlong intは32bit)
