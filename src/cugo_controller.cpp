@@ -686,14 +686,16 @@ int main(int argc, char **argv)
 
     node.node_shutdown();
   }
-  catch (const std::exception &e)
-  {
-    ROS_ERROR("std::exception error occured: %s ", e.what());
-    node.node_shutdown();
-  }
+  
   catch (const ros::Exception &e)
   {
     ROS_ERROR("ros::Exception error occured: %s ", e.what());
+    node.node_shutdown();
+  }
+  
+  catch (const std::exception &e)
+  {
+    ROS_ERROR("std::exception error occured: %s ", e.what());
     node.node_shutdown();
   }
 
