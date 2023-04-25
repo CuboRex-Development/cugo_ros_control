@@ -15,7 +15,7 @@ CugoController::CugoController(ros::NodeHandle nh)
   nh.param("reduction_ratio", reduction_ratio, (float)1.0); // default: CuGO V3
   nh.param("encoder_max", encoder_max, 2147483647); // -2147483648 ~ 2147483647(Arduinoのlong intは32bit)
   nh.param("encoder_resolution", encoder_resolution, 2048);
-  nh.param("arduino_addr", arduino_addr, std::string("192.168.8.216"));
+  nh.param("arduino_addr", arduino_addr, std::string("192.168.11.216"));
   nh.param("arduino_port", arduino_port, 8888);
   nh.param("odom_frame_id", odom_frame_id, std::string("odom"));
   nh.param("odom_child_frame_id", odom_child_frame_id, std::string("base_link"));
