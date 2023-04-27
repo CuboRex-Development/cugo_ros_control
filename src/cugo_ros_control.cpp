@@ -1,4 +1,4 @@
-#include "cugo_controller/cugo_controller.hpp"
+#include "cugo_ros_control/cugo_ros_control.hpp"
 
 CugoController::CugoController(ros::NodeHandle nh)
 {
@@ -659,9 +659,9 @@ void CugoController::node_shutdown()
 
 int main(int argc, char **argv)
 {
-  ros::init(argc, argv, "cugo_controller");
+  ros::init(argc, argv, "cugo_ros_control");
   ros::NodeHandle nh("~");
-  std::cout << "cugo_controller start!" << std::endl;
+  std::cout << "cugo_ros_control start!" << std::endl;
 
   ros::Rate loop_rate(10);
   CugoController node(nh);

@@ -1,13 +1,13 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>CuGoPy_Controller</name>
+  <name>cugo_ros_control</name>
   <version>0.0.0</version>
-  <description>The CuGoPy_Controller package</description>
+  <description>The cugo_ros_control package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->
   <!-- <maintainer email="jane.doe@example.com">Jane Doe</maintainer> -->
-  <maintainer email="yuta@todo.todo">yuta</maintainer>
+  <maintainer email="nakamura@cuborex.com">abudori</maintainer>
 
 
   <!-- One license tag required, multiple allowed, one license per tag -->
@@ -19,7 +19,7 @@
   <!-- Url tags are optional, but multiple are allowed, one per tag -->
   <!-- Optional attribute type can be: website, bugtracker, or repository -->
   <!-- Example: -->
-  <!-- <url type="website">http://wiki.ros.org/CuGoPy_Controller</url> -->
+  <!-- <url type="website">http://wiki.ros.org/cugo_ros_control</url> -->
 
 
   <!-- Author tags are optional, multiple are allowed, one per tag -->

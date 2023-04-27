@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(CuGoPy_Controller)
+project(cugo_ros_control)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -107,7 +107,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
   INCLUDE_DIRS include
-#  LIBRARIES CuGoPy_Controller
+  #  LIBRARIES cugo_ros_control 
   CATKIN_DEPENDS geometry_msgs nav_msgs roscpp rospy std_msgs tf
 #  DEPENDS system_lib
 )
@@ -125,7 +125,7 @@ include_directories(
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/CuGoPy_Controller.cpp
+#   src/${PROJECT_NAME}/cugo_ros_control.cpp
 # )
 
 ## Add cmake target dependencies of the library
@@ -136,8 +136,8 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-# add_executable(${PROJECT_NAME}_node src/CuGoPy_Controller_node.cpp)
-add_executable(cugo_controller src/cugo_controller.cpp)
+# add_executable(${PROJECT_NAME}_node src/cugo_ros_control.cpp)
+add_executable(cugo_ros_control src/cugo_ros_control.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -148,10 +148,10 @@ add_executable(cugo_controller src/cugo_controller.cpp)
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-add_dependencies(cugo_controller ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(cugo_ros_control ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(cugo_controller ${catkin_LIBRARIES})
+target_link_libraries(cugo_ros_control ${catkin_LIBRARIES})
 
 #############
 ## Install ##
@@ -200,7 +200,7 @@ target_link_libraries(cugo_controller ${catkin_LIBRARIES})
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_CuGoPy_Controller.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_cugo_ros_control.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()
