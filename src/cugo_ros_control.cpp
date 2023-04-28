@@ -68,6 +68,7 @@ float CugoController::check_overflow(float diff_, float max_)
     diff_ = diff_ + max_ * 2;
     std::cout << "Overflow: " << diff_ << std::endl;
     std::cout << "Overflow min!" << std::endl;
+    return diff_;
   }
   return diff_;
 }
@@ -686,13 +687,13 @@ int main(int argc, char **argv)
 
     node.node_shutdown();
   }
-  
+
   catch (const ros::Exception &e)
   {
     ROS_ERROR("ros::Exception error occured: %s ", e.what());
     node.node_shutdown();
   }
-  
+
   catch (const std::exception &e)
   {
     ROS_ERROR("std::exception error occured: %s ", e.what());
