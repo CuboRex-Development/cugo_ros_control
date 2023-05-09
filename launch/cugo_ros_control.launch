@@ -1,7 +1,4 @@
 <launch>
-    <!-- ここに起動したい他のパッケージを記入する 
-    <node pkg="pkg_name" name="node_name" type="execution_file.py"/>
-    -->
     <node name="cugo_ros_control" pkg="cugo_ros_control" type="cugo_ros_control" output="screen" >
         <param name="timeout" value="0.05" />
         <param name="wheel_radius_l" value="0.03858" />
