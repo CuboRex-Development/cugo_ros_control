@@ -100,7 +100,8 @@ class CugoController {
 
     // UDP
     int sock;
-    struct sockaddr_in addr;
+    struct sockaddr_in local_addr; // 受信用
+    struct sockaddr_in remote_addr; // 送信用
 
     ros::Time subscribe_time;
     ros::Time recv_time;

@@ -94,7 +94,7 @@ void CugoController::UDP_send_string_cmd()
   std::cout << "UDP_send_string_cmd" << std::endl;
   UDP_send_time = ros::Time::now();
   std::string send_data = std::to_string(target_rpm_l) + "," + std::to_string(target_rpm_r) + "\n";
-  sendto(sock, send_data.c_str(), send_data.length(), 0, (struct sockaddr *)&addr, sizeof(addr));
+  sendto(sock, send_data.c_str(), send_data.length(), 0, (struct sockaddr *)&remote_addr, sizeof(remote_addr));
 }
 
 void CugoController::create_UDP_packet(unsigned char* packet, CugoController::UdpHeader* header, unsigned char* body)
@@ -187,7 +187,7 @@ void CugoController::UDP_send_cmd()
 
   // UDPパケットの送信
   UDP_send_time = ros::Time::now();
-  int send_len = sendto(sock, (unsigned char*) packet, header.length, 0, (struct sockaddr *)&addr, sizeof(addr));
+  int send_len = sendto(sock, (unsigned char*) packet, header.length, 0, (struct sockaddr *)&remote_addr, sizeof(remote_addr));
 
   // 送信失敗時
   if (send_len <= 0)
@@ -425,10 +425,18 @@ void CugoController::init_time()
 void CugoController::init_UDP()
 {
   sock = socket(AF_INET, SOCK_DGRAM, 0);
-  addr.sin_family = AF_INET; // IPv4
-  addr.sin_port = htons(arduino_port);
-  addr.sin_addr.s_addr = inet_addr(arduino_addr.c_str()); // INADDR_ANYの場合すべてのアドレスからのパケットを受信する
 
+  // 自身の受信用ipアドレス、ポート設定
+  local_addr.sin_family = AF_INET; // IPv4
+  local_addr.sin_port = htons(source_port);
+  local_addr.sin_addr.s_addr = INADDR_ANY; // INADDR_ANYの場合すべてのアドレスからパケットを受信する
+
+  // 送信先arduinoのipアドレス、ポート設定
+  remote_addr.sin_family = AF_INET; // IPv4
+  remote_addr.sin_port = htons(arduino_port);
+  remote_addr.sin_addr.s_addr = inet_addr(arduino_addr.c_str());
+
+  // 受信タイムアウトの設定
   struct timeval tv;
   tv.tv_sec = timeout;
   tv.tv_usec = 0;
