@@ -4,10 +4,6 @@ CuGoをROSで制御する際、ROS開発キットに付属するArduinoに対し
 
 Arduinoドライバのリポジトリはこちら： https://github.com/CuboRex-Development/cugo-ros-arduinodriver.git
 
-English Documents here：
-
-正式リリースするまでは、beta branchで管理しますので、そちらをご参照ください。
-
 # Table of Contents
 - [Features](#features)
 - [Requirement](#requirement)
@@ -39,31 +35,40 @@ $ source ~/your/ros_workspace/catkin_ws/devel/setup.bash
 
 # Usage
 
-## 実行方法
+###  (推奨) roslaunchを用いた起動方法
+
+下記のコマンドで起動します。roslaunchを用いて起動する際、いくつかのパラメータを指定することができます。詳細は[Parameters](#parameters)の項目を参照してください。なお、オドメトリ座標はlaunchファイル内でトピック名を変更しており、/odomとしてPublishされます。
 ~~~
-$ roslaunch CuGoPy_Controller start_cugo_controller.launch
+$ roslaunch cugo_ros_control cugo_ros_control.launch
 ~~~
 →ノード名が旧名なので、"cugo-ros-controller"に後ほど変更します。
 
-以下のLaunchで起動すると、joy_nodeやteleop_joy_nodeを同時に起動することができます。
+### rosrunを用いた起動方法
+
+次のコマンドで起動します。ただし、rosrunを用いて起動する場合はオドメトリ座標が/cugo_ros_control/odomとしてPublishされます。
 ~~~
-$ roslaunch CuGoPy_Controller start_ps4_controller.launch
+$ rosrun cugo_ros_control cugo_ros_control
 ~~~
-他に、任意のノードと同時に起動したい場合、こちらのlaunchファイルを編集して使用してください。
+
+### teleop_twist_keyboardとの同時起動
+
+下記のコマンドで起動すると、teleop_twist_keyboardノードを同時に起動し、キーボードから制御値を入力することができます。こちらも、オドメトリ座標はlaunchファイル内でトピック名を変更しており、/odomとしてPublishされます。
+
 ~~~
-$ roslaunch CuGoPy_Controller start_any_apps.launch
+$ roslaunch cugo_ros_control teleop_twist_keyboard.launch
 ~~~
 
 # Topics and Parameters
-## Published Topics
-- /cugo_controller/odom ([nav_msgs/Odometry](http://docs.ros.org/en/noetic/api/nav_msgs/html/msg/Odometry.html))
+### Published Topics
+- /odom ([nav_msgs/Odometry](http://docs.ros.org/en/noetic/api/nav_msgs/html/msg/Odometry.html))
+  - rosrunを用いた起動時のトピック名: /cugo_ros_control/odom
 - /tf ([tf2_msgs/TFMessage](http://docs.ros.org/en/jade/api/tf2_msgs/html/msg/TFMessage.html))
 
-## Subscribed Topics
+### Subscribed Topics
 - /cmd_vel ([geometry_msgs/Twist](http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/Twist.html))
 
-## Parameters
-- ~arduino_addr (string, default: 192.168.8.216)
+### Parameters
+- ~arduino_addr (string, default: 192.168.11.216)
   - Arduinoドライバの通信受付IPアドレス
 - ~arduino_port (int, default: 8888)
   - Arduinoドライバの通信受付ポート番号
@@ -72,7 +77,9 @@ $ roslaunch CuGoPy_Controller start_any_apps.launch
 - ~encoder_resolution (int, default: 2048)
   - エンコーダ分解能
 - ~odom_child_frame_id (string, default: base_link)
+  - オドメトリ子フレームID
 - ~odom_frame_id (string, default: odom)
+  - オドメトリフレームID
 - ~reduction_ratio (float, default: 1.0)
   - 減速比
 - ~timeout (float, default: 0.05)
@@ -85,6 +92,27 @@ $ roslaunch CuGoPy_Controller start_any_apps.launch
   - 右タイヤ半径[m]
 
 上記のパラメータはlaunchファイルで設定されています。
+
+# UDP Protocol
+CuGo-ROS-ArduinoDriverと、ヘッダ8バイト・ボディ64バイトの合計72バイトから構成されるデータを通信しています。
+ボディデータに格納されるデータの一覧は以下の通りになります。
+なお、扱うデータは今後拡張する予定です。
+
+### Arduinoドライバへの送信データ
+
+Data Name      | Data Type  | Data Size(byte) | Start Address in PacketBody | Data Abstract
+---------------|------------|-----------------|-----------------------------|--------------------
+TARGET_RPM_L   | float      | `4`             | 0                           | RPM指令値(左モータ)
+TARGET_RPM_R   | float      | `4`             | 4                           | RPM指令値(右モータ)
+
+
+### Arduinoドライバからの受信データ
+
+Data Name      | Data Type  | Data Size(byte) | Start Address in PacketBody | Data Abstract
+---------------|------------|-----------------|-----------------------------|-----------------
+RECV_ENCODER_L | float      | `4`             | 0                           | 左エンコーダのカウント数
+RECV_ENCODER_R | float      | `4`             | 4                           | 右エンコーダのカウント数
+
 
 # Note
 
