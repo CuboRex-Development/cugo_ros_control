@@ -56,6 +56,7 @@ class CugoController {
     std::string arduino_addr = "192.168.8.216";
     //std::string arduino_addr = "127.0.0.1"; // テスト用
     int arduino_port = 8888;
+    int source_port = 8888;
     std::string odom_frame_id;
     std::string odom_child_frame_id;
 

@@ -17,6 +17,7 @@ CugoController::CugoController(ros::NodeHandle nh)
   nh.param("encoder_resolution", encoder_resolution, 2048);
   nh.param("arduino_addr", arduino_addr, std::string("192.168.11.216"));
   nh.param("arduino_port", arduino_port, 8888);
+  nh.param("source_port", source_port, 8888);
   nh.param("odom_frame_id", odom_frame_id, std::string("odom"));
   nh.param("odom_child_frame_id", odom_child_frame_id, std::string("base_link"));
 
@@ -176,7 +177,7 @@ void CugoController::UDP_send_cmd()
 
   // UDPヘッダの作成
   UdpHeader header;
-  header.sourcePort = 8888; // TODO
+  header.sourcePort = htons(source_port);
   header.destinationPort = htons(arduino_port);
   header.length = sizeof(UdpHeader) + sizeof(body);
   header.checksum = checksum;
@@ -440,14 +441,28 @@ void CugoController::init_UDP()
   struct timeval tv;
   tv.tv_sec = timeout;
   tv.tv_usec = 0;
-
-  if (setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv)) < 0)
+  int setsockopt_status;
+  setsockopt_status = setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv));
+  if (setsockopt_status < 0)
   {
-    perror("setsockopt");
+    perror("setsockopt failed");
+    ROS_ERROR("setsockopt failed");
+    throw std::logic_error("an exception occured: setsockopt failed");
     return;
   }
 
-  bind(sock, (const struct sockaddr *)&addr, sizeof(addr));
+  // 受信ポート設定
+  int bind_status;
+  bind_status = bind(sock, (const struct sockaddr *)&local_addr, sizeof(local_addr));
+  if (bind_status < 0)
+  {
+    perror("bind failed");
+    ROS_ERROR("bind failed");
+    throw std::logic_error("an exception occured: bind failed");
+    return;
+  }
+
+  // ノンブロッキングモードの設定
   int val = 1;
   ioctl(sock, FIONBIO, &val);
 }
