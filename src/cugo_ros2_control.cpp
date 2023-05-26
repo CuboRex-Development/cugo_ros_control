@@ -697,20 +697,17 @@ int main(int argc, char * argv[])
     }
     rclcpp::shutdown();
   }
-
   //TODO ros2由来の例外処理
-  //catch (const rclcpp::exceptions::RCLErrorBase &e)
-  //{
-  //  RCLCPP_ERROR(node->get_logger(), "ros::Exception error occured: %s ", e.what());
-  //  rclcpp::shutdown();
-  //}
-
+  catch (const rclcpp::exceptions::RCLError &e)
+  {
+    RCLCPP_ERROR(node->get_logger(), "unexpectedly failed with %s ", e.what());
+    rclcpp::shutdown();
+  }
   catch (const std::exception &e)
   {
     RCLCPP_ERROR(node->get_logger(), "std::exception error occured: %s ", e.what());
     rclcpp::shutdown();
   }
-
   return 0;
 }
 
