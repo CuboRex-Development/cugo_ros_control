@@ -3,45 +3,632 @@
 CugoController::CugoController()
 : Node("cugo_ros2_control")
 {
-  twist_sub_ = this->create_subscription<geometry_msgs::msg::Twist>(
-      "cmd_vel", 10, std::bind(&CugoController::twist_callback, this, _1));
+  cmd_vel_sub_ = this->create_subscription<geometry_msgs::msg::Twist>(
+      "cmd_vel", 10, std::bind(&CugoController::cmd_vel_callback, this, _1));
 
   // Initialize the transform broadcaster
   tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
 
   odom_pub_ = this->create_publisher<nav_msgs::msg::Odometry>("odom", 10);
+
+  // パラメータ読み込み
+  this->declare_parameter("timeout", (float)0.05); // default: 10Hz
+  timeout = this->get_parameter("timeout").as_double();
+  this->declare_parameter("wheel_radius_l", (float)0.03858); // default: CuGO V3
+  wheel_radius_l = this->get_parameter("wheel_radius_l").as_double();
+  this->declare_parameter("wheel_radius_r", (float)0.03858); // default: CuGO V3
+  wheel_radius_r = this->get_parameter("wheel_radius_r").as_double();
+  this->declare_parameter("tread", (float)0.460); // default: CuGO V3
+  tread = this->get_parameter("tread").as_double();
+  this->declare_parameter("reduction_ratio", (float)1.0); // default CuGO V3
+  reduction_ratio = this->get_parameter("reduction_ratio").as_double();
+  this->declare_parameter("encoder_max", 2147483647); // -2147483648 ~ 2147483647(Arduinoのlong intは32bit)
+  encoder_max = this->get_parameter("encoder_max").as_int();
+  this->declare_parameter("encoder_resolution", 2048);
+  encoder_resolution = this->get_parameter("encoder_resolution").as_int();
+  this->declare_parameter("arduino_addr", std::string("192.168.11.216"));
+  arduino_addr = this->get_parameter("arduino_addr").as_string();
+  this->declare_parameter("arduino_port", 8888);
+  arduino_port = this->get_parameter("arduino_port").as_int();
+  this->declare_parameter("odom_frame_id", std::string("odom"));
+  odom_frame_id = this->get_parameter("odom_frame_id").as_string();
+  this->declare_parameter("odom_child_frame_id", std::string("base_link"));
+  odom_child_frame_id = this->get_parameter("odom_child_frame_id").as_string();
+
+  view_parameters();
+  view_init();
 }
 
 CugoController::~CugoController()
 {
 }
 
-void CugoController::view()
+// ここから既存コード ///////////////////////////
+
+uint16_t CugoController::calculate_checksum(const void* data, size_t size, size_t start = 0)
 {
-  RCLCPP_INFO(this->get_logger(), "Viewing...");
+  uint16_t checksum = 0;
+  const uint8_t* bytes = static_cast<const uint8_t*>(data);
+  // バイト列を2バイトずつ加算
+  for (size_t i = start; i < size; i += 2)
+  {
+    checksum += (bytes[i] << 8) | bytes[i+1];
+  }
+  // 桁あふれがあった場合は回収
+  checksum = (checksum & 0xFFFF) + (checksum >> 16);
+  // チェックサムを反転
+  return ~checksum;
 }
 
-void CugoController::publish()
+float CugoController::check_overflow(float diff_, float max_)
 {
-  odom_publish();
-  RCLCPP_INFO(this->get_logger(), "Publishing odometry" );
+  //std::cout << "check_overflow" << std::endl;;
+  // upper limit
+  if (diff_ > max_ * 0.9) {
+    diff_ = diff_ - max_ * 2;
+    std::cout << "Overflow: " << diff_ << std::endl;
+    std::cout << "Overflow max!" << std::endl;
+    return diff_;
+  }
+  // lower limit
+  if (diff_ < -max_ * 0.9) {
+    diff_ = diff_ + max_ * 2;
+    std::cout << "Overflow: " << diff_ << std::endl;
+    std::cout << "Overflow min!" << std::endl;
+    return diff_;
+  }
+  return diff_;
 }
 
-void CugoController::twist_callback(const geometry_msgs::msg::Twist::SharedPtr msg) const
+void CugoController::calc_odom()
 {
-  //RCLCPP_INFO(this->get_logger(), "I heard: '%f'", msg->linear);
-  RCLCPP_INFO(this->get_logger(), "I heard: twist");
+  odom_x += vx_dt * cos(odom_yaw) - vy_dt * sin(odom_yaw);
+  odom_y += vx_dt * sin(odom_yaw) - vy_dt * cos(odom_yaw);
+  odom_yaw += theta_dt;
+
+  // 故障代替値の更新
+  alt_odom_x = odom_x;
+  alt_odom_y = odom_y;
+  alt_odom_yaw = odom_yaw;
 }
 
+void CugoController::create_UDP_packet(unsigned char* packet, CugoController::UdpHeader* header, unsigned char* body)
+{
+  size_t offset = 0;
+
+  // パケットへヘッダの書き込み
+  std::memcpy(packet + offset, &header->sourcePort, sizeof(header->sourcePort));
+  offset += sizeof(header->sourcePort);
+  std::memcpy(packet + offset, &header->destinationPort, sizeof(header->destinationPort));
+  offset += sizeof(header->destinationPort);
+  std::memcpy(packet + offset, &header->length, sizeof(header->length));
+  offset += sizeof(header->length);
+  std::memcpy(packet + offset, &header->checksum, sizeof(header->checksum));
+  offset += sizeof(header->checksum);
+
+  // パケットへボディデータの書き込み
+  std::memcpy(packet + offset, body, sizeof(unsigned char)*UDP_BUFF_SIZE);
+}
+
+void CugoController::write_float_to_buf(unsigned char* buf, const int TARGET, float val)
+{
+  unsigned char* val_ptr = reinterpret_cast<unsigned char*>(&val);
+  std::memcpy(buf + TARGET, val_ptr, sizeof(float));
+}
+
+void CugoController::write_int_to_buf(unsigned char* buf, const int TARGET, int val)
+{
+  unsigned char* val_ptr = reinterpret_cast<unsigned char*>(&val);
+  std::memcpy(buf + TARGET, val_ptr, sizeof(int));
+}
+
+void CugoController::write_bool_to_buf(unsigned char* buf, const int TARGET, bool val)
+{
+  unsigned char* val_ptr = reinterpret_cast<unsigned char*>(&val);
+  std::memcpy(buf + TARGET, val_ptr, sizeof(bool));
+}
+
+float CugoController::read_float_from_buf(unsigned char* buf, const int TARGET)
+{
+  float val = *reinterpret_cast<float*>(buf + UDP_HEADER_SIZE + TARGET);
+  return val;
+}
+
+int CugoController::read_int_from_buf(unsigned char* buf, const int TARGET)
+{
+  int val = *reinterpret_cast<int*>(buf + UDP_HEADER_SIZE + TARGET);
+  return val;
+}
+
+bool CugoController::read_bool_from_buf(unsigned char* buf, const int TARGET)
+{
+  bool val = *reinterpret_cast<bool*>(buf + UDP_HEADER_SIZE + TARGET);
+  return val;
+}
+
+uint16_t CugoController::read_uint16_t_from_header(unsigned char* buf, const int TARGET)
+{
+  if (TARGET >= UDP_HEADER_SIZE-1) return 0;
+  uint16_t val = *reinterpret_cast<uint16_t*>(buf + TARGET);
+  return val;
+}
+
+void CugoController::UDP_send_cmd()
+{
+  // ボディデータ用バッファの作成
+  unsigned char body[UDP_BUFF_SIZE];
+  // バッファの初期化
+  memset(body, 0x00, sizeof(body));
+
+  // バッファへのbodyデータの書き込み
+  write_float_to_buf(body, TARGET_RPM_L_PTR, target_rpm_l);
+  write_float_to_buf(body, TARGET_RPM_R_PTR, target_rpm_r);
+
+  // チェックサムを計算
+  uint16_t checksum = calculate_checksum(body, UDP_BUFF_SIZE);
+  printf("send calc_checksum: %x\n", checksum);
+
+  // UDPヘッダの作成
+  UdpHeader header;
+  header.sourcePort = 8888; // TODO
+  header.destinationPort = htons(arduino_port);
+  header.length = sizeof(UdpHeader) + sizeof(body);
+  header.checksum = checksum;
+
+  // UDPパケットの作成
+  unsigned char* packet = new unsigned char[header.length];
+  create_UDP_packet(packet, &header, body);
+
+  // UDPパケットの送信
+  UDP_send_time = this->get_clock()->now();
+  int send_len = sendto(sock, (unsigned char*) packet, header.length, 0, (struct sockaddr *)&addr, sizeof(addr));
+
+  // 送信失敗時
+  if (send_len <= 0)
+  {
+    // errnoによるエラー表示
+    view_send_error();
+  }
+
+  std::cout << "send_len: " << send_len << std::endl;
+  delete[] packet;
+}
+
+void CugoController::view_odom()
+{
+  std::cout << "in_twist: " << vector_v << ", " << vector_omega << std::endl;
+  std::cout << "out_twist: " << odom_twist_x << ", " << odom_twist_yaw << std::endl;
+  std::cout << "odom: " << odom_x << ", " << odom_y << ", " << odom_yaw << std::endl;
+}
+
+void CugoController::view_init()
+{
+  std::cout << "view_init" << std::endl;
+}
+
+void CugoController::view_parameters()
+{
+  std::cout << "arduino_addr: " << arduino_addr << std::endl;
+  std::cout << "arduino_port: " << arduino_port << std::endl;
+  std::cout << "encoder_max: " << encoder_max << std::endl;
+  std::cout << "encoder_resolution: " << encoder_resolution << std::endl;
+  std::cout << "odom_child_frame_id: " << odom_child_frame_id << std::endl;
+  std::cout << "odom_frame_id: " << odom_frame_id << std::endl;
+  std::cout << "reduction_ratio: " << reduction_ratio << std::endl;
+  std::cout << "timeout: " << timeout << std::endl;
+  std::cout << "tread: " << tread << std::endl;
+  std::cout << "wheel_radius_l: " << wheel_radius_l << std::endl;
+  std::cout << "wheel_radius_r: " << wheel_radius_r << std::endl;
+}
+
+void CugoController::init_UDP()
+{
+  sock = socket(AF_INET, SOCK_DGRAM, 0);
+  addr.sin_family = AF_INET; // IPv4
+  addr.sin_port = htons(arduino_port);
+  addr.sin_addr.s_addr = inet_addr(arduino_addr.c_str()); // INADDR_ANYの場合すべてのアドレスからのパケットを受信する
+
+  struct timeval tv;
+  tv.tv_sec = timeout;
+  tv.tv_usec = 0;
+
+  if (setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv)) < 0)
+  {
+    perror("setsockopt");
+    return;
+  }
+
+  bind(sock, (const struct sockaddr *)&addr, sizeof(addr));
+  int val = 1;
+  ioctl(sock, FIONBIO, &val);
+}
+
+void CugoController::close_UDP()
+{
+  std::cout << "UDP port close..." << std::endl;
+  close(sock);
+}
+
+void CugoController::count2twist()
+{
+  std::cout << "\ncount2twist" << std::endl;
+  float diff_time = (recv_time - last_recv_time).seconds();
+  std::cout << "diff_time: " << diff_time << std::endl;
+  if (diff_time != 0.0)
+  {
+    std::cout << "calc twist" << std::endl;
+    int count_diff_l = recv_encoder_l - last_recv_encoder_l;
+    int count_diff_r = recv_encoder_r - last_recv_encoder_r;
+    last_recv_encoder_l = recv_encoder_l;
+    last_recv_encoder_r = recv_encoder_r;
+
+    // マイコン側のオーバーフロー対策
+    count_diff_l = check_overflow(count_diff_l,  encoder_max);
+    count_diff_r = check_overflow(count_diff_r,  encoder_max);
+
+    float vl = count_diff_l / (encoder_resolution * reduction_ratio) * 2 * wheel_radius_l * M_PI;
+    float vr = count_diff_r / (encoder_resolution * reduction_ratio) * 2 * wheel_radius_r * M_PI;
+
+    vx_dt = (vl + vr) / 2;
+    theta_dt = (vr - vl) / tread;
+
+    odom_twist_x = vx_dt / diff_time;
+    odom_twist_yaw = theta_dt / diff_time;
+
+    // 故障代替値の更新
+    alt_odom_twist_x = odom_twist_x;
+    alt_odom_twist_yaw = odom_twist_yaw;
+
+    diff_err_count = 0;
+  }
+  else
+  {
+    std::cout << "diff_time == 0.0" << std::endl;
+  }
+}
+
+void CugoController::twist2rpm()
+{
+  std::cout << "\ntwist2rpm" << std::endl;
+  float omega_l = vector_v / wheel_radius_l - tread * vector_omega / (2 * wheel_radius_l);
+  float omega_r = vector_v / wheel_radius_r + tread * vector_omega / (2 * wheel_radius_r);
+  target_rpm_l = omega_l * 60 / (2 * M_PI);
+  target_rpm_r = omega_r * 60 / (2 * M_PI);
+  std::cout << target_rpm_l << ", " << target_rpm_r << std::endl;
+}
+
+void CugoController::check_failsafe()
+{
+  check_communication();
+}
+
+void CugoController::send_rpm_MCU()
+{
+  std::cout << "\nsend_rpm_MCU" << std::endl;
+  UDP_send_cmd(); // binary
+  //UDP_send_string_cmd(); // string
+}
+
+
+// ここまで既存コード ///////////////////////////
+
+
+// TODO 変更が必要な既存コード
+void CugoController::recv_count_MCU()
+{
+  std::cout << "\nrecv_count_MCU" << std::endl;
+  unsigned char buf[UDP_HEADER_SIZE + UDP_BUFF_SIZE];
+  // バッファの初期化
+  memset(buf, 0x00, sizeof(buf));
+
+  // 受信
+  int recv_len = recv(sock, buf, sizeof(buf), 0);
+  std::cout << "recv_len: " << recv_len << std::endl;
+  // 受信バッファがない場合
+  if (recv_len <= 0)
+  {
+    view_recv_error();
+  }
+  // 受信バッファがある場合
+  else
+  {
+    // 受信したパケットの表示
+    printf("-------received data-------\n");
+    // ヘッダの表示
+    printf("header\n");
+    for(int i=0;i<UDP_HEADER_SIZE;i++)
+    {
+      printf("%3hhu ", buf[i]);
+    }
+    printf("\n");
+    // ボディデータの表示
+    printf("data\n");
+    for(int i=UDP_HEADER_SIZE;i<UDP_BUFF_SIZE;i++)
+    {
+      printf("%3hhu ", buf[i]);
+      if ((i+1)%8==0) printf("\n");
+    }
+    printf("\n");
+
+    // エラーカウントのリセット
+    recv_err_count = 0;
+
+    uint16_t recv_checksum = read_uint16_t_from_header(buf, RECV_HEADER_CHECKSUM_PTR);
+    uint16_t calc_checksum = calculate_checksum(buf, recv_len, UDP_HEADER_SIZE);
+    // 異常時のフロー
+    if (recv_checksum != calc_checksum)
+    {
+      RCLCPP_ERROR(this->get_logger(), "Packet integrity check failed");
+    }
+    // 正常時のフロー
+    else
+    {
+      // エラーカウントのリセット
+      checksum_err_count = 0;
+
+      // ベクトル計算用の時間を計測
+      last_recv_time = recv_time;
+      recv_time = this->get_clock()->now();
+      // UDPの一往復の時間を測定
+      std::cout << "UDP time:" << (recv_time - UDP_send_time).seconds() << std::endl;
+
+      // エンコーダ値の読み出し
+      recv_encoder_l = read_float_from_buf(buf, RECV_ENCODER_L_PTR);
+      recv_encoder_r = read_float_from_buf(buf, RECV_ENCODER_R_PTR);
+
+      // 故障代替値の更新
+      alt_recv_encoder_l = recv_encoder_l;
+      alt_recv_encoder_r = recv_encoder_r;
+
+      std::cout << "recv_encoder: " << recv_encoder_l << ", " << recv_encoder_r << std::endl;
+    }
+  }
+}
+
+void CugoController::init_time()
+{
+  recv_time = this->get_clock()->now();
+  last_recv_time = this->get_clock()->now();
+  subscribe_time = this->get_clock()->now();
+}
+
+void CugoController::view_send_error()
+{
+  int errsv = errno;
+  if (errsv == EAGAIN || errsv == EWOULDBLOCK)
+  {
+    perror("EAGAIN or EWOULDBLOCK");
+    RCLCPP_ERROR(this->get_logger(), "send_err EAGAIN or EWOULDBLOCK, errno: %i", errsv);
+  }
+  else if (errsv == EALREADY)
+  {
+    perror("EALREADY");
+    RCLCPP_ERROR(this->get_logger(), "send_err EALREADY, errno: %i", errsv);
+  }
+  else if (errsv == EBADF)
+  {
+    perror("EBADF");
+    RCLCPP_ERROR(this->get_logger(), "send_err EBADF, errno: %i", errsv);
+  }
+  else if (errsv == ECONNRESET)
+  {
+    perror("ECONNRESET");
+    RCLCPP_ERROR(this->get_logger(), "send_err ECONNRESET, errno: %i", errsv);
+  }
+  else if (errsv == EDESTADDRREQ)
+  {
+    perror("EDESTADDRREQ");
+    RCLCPP_ERROR(this->get_logger(), "send_err EDESTADDRREQ, errno: %i", errsv);
+  }
+  else if (errsv == EFAULT)
+  {
+    perror("EFAULT");
+    RCLCPP_ERROR(this->get_logger(), "send_err EFAULT, errno: %i", errsv);
+  }
+  else if (errsv == EINTR)
+  {
+    perror("EINTR");
+    RCLCPP_ERROR(this->get_logger(), "send_err EINTR, errno: %i", errsv);
+  }
+  else if (errsv == EINVAL)
+  {
+    perror("EINVAL");
+    RCLCPP_ERROR(this->get_logger(), "send_err EINVAL, errno: %i", errsv);
+  }
+  else if (errsv == EISCONN)
+  {
+    perror("EISCONN");
+    RCLCPP_ERROR(this->get_logger(), "send_err EISCONN, errno: %i", errsv);
+  }
+  else if (errsv == EMSGSIZE)
+  {
+    perror("EMSGSIZE");
+    RCLCPP_ERROR(this->get_logger(), "send_err EMSGSIZE, errno: %i", errsv);
+  }
+  else if (errsv == ENOBUFS)
+  {
+    perror("ENOBUFFS");
+    RCLCPP_ERROR(this->get_logger(), "send_err ENOBUFS, errno: %i", errsv);
+  }
+  else if (errsv == ENOMEM)
+  {
+    perror("ENOMEM");
+    RCLCPP_ERROR(this->get_logger(), "send_err ENOMEM, errno: %i", errsv);
+  }
+  else if (errsv == ENOTCONN)
+  {
+    perror("ENOTCONN");
+    RCLCPP_ERROR(this->get_logger(), "send_err ENOTCONN, errno: %i", errsv);
+  }
+  else if (errsv == ENOTSOCK)
+  {
+    perror("ENOTSOCK");
+    RCLCPP_ERROR(this->get_logger(), "send_err ENOTSOCK, errno: %i", errsv);
+  }
+  else if (errsv == EOPNOTSUPP)
+  {
+    perror("EOPNOTSUPP");
+    RCLCPP_ERROR(this->get_logger(), "send_err EOPNOTSUPP, errno: %i", errsv);
+  }
+  else if (errsv == EPIPE)
+  {
+    perror("EPIPE");
+    RCLCPP_ERROR(this->get_logger(), "send_err EPIPE, errno: %i", errsv);
+  }
+  else
+  {
+    perror("other error");
+    RCLCPP_ERROR(this->get_logger(), "send_err errno: %i", errsv);
+  }
+}
+
+void CugoController::view_recv_error()
+{
+  int errsv = errno;
+  if (errsv == EAGAIN || errsv == EWOULDBLOCK)
+  {
+    perror("EAGAIN or EWOULDBLOCK");
+    RCLCPP_ERROR(this->get_logger(), "recv_err EAGAIN or EWOULDBLOCK, errno: %i", errsv);
+  }
+  else if (errsv == EBADF)
+  {
+    perror("Invalid socket");
+    RCLCPP_ERROR(this->get_logger(), "recv_err EBADF, errno: %i", errsv);
+  }
+  else if (errsv == ECONNREFUSED)
+  {
+    perror("Refused Network Connection");
+    RCLCPP_ERROR(this->get_logger(), "recv_err ECONNREFUSED, errno: %i", errsv);
+  }
+  else if (errsv == EFAULT)
+  {
+    perror("EFAULT");
+    RCLCPP_ERROR(this->get_logger(), "recv_err EFAULT, errno: %i", errsv);
+  }
+  else if (errsv == EINTR)
+  {
+    perror("EINTR");
+    RCLCPP_ERROR(this->get_logger(), "recv_err EINTR, errno: %i", errsv);
+  }
+  else if (errsv == EINVAL)
+  {
+    perror("EINVAL: Invalid Argument");
+    RCLCPP_ERROR(this->get_logger(), "recv_err EINVAL, errno: %i", errsv);
+  }
+  else if (errsv == ENOMEM)
+  {
+    perror("ENOMEM");
+    RCLCPP_ERROR(this->get_logger(), "recv_err ENOMEM, errno: %i", errsv);
+  }
+  else if (errsv == ENOTCONN)
+  {
+    perror("ENOTCONN: socket is not connected");
+    RCLCPP_ERROR(this->get_logger(), "recv_err ENOTCONN, errno: %i", errsv);
+  }
+  else if (errsv == ENOTSOCK)
+  {
+    perror("ENOTSOCK");
+    RCLCPP_ERROR(this->get_logger(), "recv_err ENOTSOCK, errno: %i", errsv);
+  }
+  else
+  {
+    perror("other recv error");
+    RCLCPP_ERROR(this->get_logger(), "recv_err errno: %i", errsv);
+  }
+}
+
+
+void CugoController::check_communication()
+{
+  recv_err_count++;
+  checksum_err_count++;
+  diff_err_count++;
+  // エラーが一定回数連続して確認された場合、故障代替値を格納する
+  // パケットの受信がなかった場合
+  if (recv_err_count > 5)
+  {
+    vector_v = 0.0;
+    vector_omega = 0.0;
+    recv_encoder_l = alt_recv_encoder_l;
+    recv_encoder_r = alt_recv_encoder_r;
+    RCLCPP_ERROR(this->get_logger(), "UDP recv error: Could not receive packet");
+    // エラーカウントのリセット
+    recv_err_count = 0;
+  }
+  // 受信時にチェックサムが一致しなかった場合
+  if (checksum_err_count > 5)
+  {
+    vector_v = 0.0;
+    vector_omega = 0.0;
+    recv_encoder_l = alt_recv_encoder_l;
+    recv_encoder_r = alt_recv_encoder_r;
+    RCLCPP_ERROR(this->get_logger(), "UDP recv error: Packet integrity check failed");
+    // エラーカウントのリセット
+    checksum_err_count = 0;
+  }
+  // 同一時刻のデータ処理が続いた場合
+  if (diff_err_count > 5)
+  {
+    vector_v = 0.0;
+    vector_omega = 0.0;
+    odom_twist_x = alt_odom_twist_x;
+    odom_twist_yaw = alt_odom_twist_yaw;
+    RCLCPP_ERROR(this->get_logger(), "UDP recv error: diff_time zero division error");
+    // エラーカウントのリセット
+    diff_err_count = 0;
+  }
+}
+
+void CugoController::check_stop_cmd_vel()
+{
+  float subscribe_duration = (this->get_clock()->now() - subscribe_time).seconds();
+  if (subscribe_duration > ((float)stop_motor_time / 1000))
+  {
+    std::cout << "/cmd_vel disconnect...\nset target rpm 0.0" << std::endl;
+    vector_v = 0.0;
+    vector_omega = 0.0;
+  }
+}
+
+void CugoController::node_shutdown()
+{
+  close_UDP();
+  cmd_vel_sub_.reset();
+  rclcpp::shutdown();
+  std::cout << "node_shutdown" << std::endl;
+}
+
+
+
+
+// ros2実装したもの
 void CugoController::odom_publish()
+{
+  RCLCPP_INFO(this->get_logger(), "Publishing odometry" );
+  calc_odom();
+  publish();
+}
+
+// ros2実装したもの
+void CugoController::cmd_vel_callback(const geometry_msgs::msg::Twist::SharedPtr msg)
+{
+  RCLCPP_INFO(this->get_logger(), "cmd_vel_callback");
+  RCLCPP_INFO(this->get_logger(), "twist: %f, %f", vector_v, vector_omega);
+  vector_v = msg->linear.x;
+  vector_omega = msg->angular.z;
+  subscribe_time = this->get_clock()->now();
+}
+
+// ros2実装したもの
+void CugoController::publish()
 {
   geometry_msgs::msg::TransformStamped t;
 
   // Read message content and assign it to
   // corresponding tf variables
   t.header.stamp = this->get_clock()->now();
-  t.header.frame_id = "odom";
-  t.child_frame_id = "base_link";
+  t.header.frame_id = odom_frame_id;
+  t.child_frame_id = odom_child_frame_id;
 
   // Turtle only exists in 2D, thus we get x and y translation
   // coordinates from the message and set the z coordinate to 0
@@ -53,7 +640,7 @@ void CugoController::odom_publish()
   // and this why we set rotation in x and y to 0 and obtain
   // rotation in z axis from the message
   tf2::Quaternion q;
-  q.setRPY(0, 0, 0.0/* theta */);
+  q.setRPY(0, 0, odom_yaw);
   t.transform.rotation.x = q.x();
   t.transform.rotation.y = q.y();
   t.transform.rotation.z = q.z();
@@ -65,20 +652,20 @@ void CugoController::odom_publish()
   geometry_msgs::msg::Quaternion odom_quat = tf2::toMsg(q);
 
   nav_msgs::msg::Odometry odom;
-  odom.header.stamp = this->get_clock()->now(); //recv_time;
-  odom.header.frame_id = "odom"; //odom_frame_id;
+  odom.header.stamp = recv_time;
+  odom.header.frame_id = odom_frame_id;
 
   // set the position
-  odom.pose.pose.position.x = 0.0; //odom_x
-  odom.pose.pose.position.y = 0.0; //odom_y
+  odom.pose.pose.position.x = odom_x;
+  odom.pose.pose.position.y = odom_y;
   odom.pose.pose.position.z = 0.0;
   odom.pose.pose.orientation = odom_quat;
 
   // set the velocity
-  odom.child_frame_id = "base_link"; //odom_child_frame_id
-  odom.twist.twist.linear.x = 0.0; //odom_twist_x;
-  odom.twist.twist.linear.y = 0.0; //odom_twist_y
-  odom.twist.twist.angular.z = 0.0; // odom_twist_yaw
+  odom.child_frame_id = odom_child_frame_id;
+  odom.twist.twist.linear.x = odom_twist_x;
+  odom.twist.twist.linear.y = odom_twist_y;
+  odom.twist.twist.angular.z = odom_twist_yaw;
 
   odom_pub_->publish(odom);
 }
@@ -88,17 +675,42 @@ int main(int argc, char * argv[])
   // rclcppの初期化
   rclcpp::init(argc, argv);
   std::shared_ptr<CugoController> node = std::make_shared<CugoController>();
+  std::cout << "cugo_ros2_control start!" << std::endl;
 
   rclcpp::WallRate loop_rate(10); // 10Hz
-  while (rclcpp::ok())
+
+  try
   {
-    node->view();
-    node->publish();
-    rclcpp::spin_some(node);
-    loop_rate.sleep();
+    node->init_time();
+    node->init_UDP();
+
+    while (rclcpp::ok())
+    {
+      node->check_failsafe();
+      node->check_stop_cmd_vel();
+      node->send_rpm_MCU();
+      node->recv_count_MCU();
+      node->count2twist();
+      node->odom_publish();
+      rclcpp::spin_some(node);
+      loop_rate.sleep();
+    }
+    rclcpp::shutdown();
   }
 
-  rclcpp::shutdown();
+  //TODO ros2由来の例外処理
+  //catch (const rclcpp::exceptions::RCLErrorBase &e)
+  //{
+  //  RCLCPP_ERROR(node->get_logger(), "ros::Exception error occured: %s ", e.what());
+  //  rclcpp::shutdown();
+  //}
+
+  catch (const std::exception &e)
+  {
+    RCLCPP_ERROR(node->get_logger(), "std::exception error occured: %s ", e.what());
+    rclcpp::shutdown();
+  }
+
   return 0;
 }
 
