@@ -10,6 +10,6 @@
         <param name="arduino_port" value="8888" />
         <param name="arduino_addr" value="192.168.11.216" />
         <param name="odom_frame_id" value="odom" />
-        <param name="odom_child_frame_id" value="base_link" />
+        <param name="odom_child_frame_id" value="base_footprint" />
     </node>
 </launch>

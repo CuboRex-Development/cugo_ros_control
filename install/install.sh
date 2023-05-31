@@ -6,6 +6,7 @@ echo ""
 echo "Install the sensor packages used by CuGo."
 echo ""
 
+echo "Only apt installs use sudo privileges."
 sudo apt update
 
 cd ../..
