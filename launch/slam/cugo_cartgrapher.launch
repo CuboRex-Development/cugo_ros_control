@@ -1,0 +1,41 @@
+<!--
+  Used for visualising rplidar in action.  
+  
+  It requires rplidar.launch.
+ -->
+<launch>
+
+  <!-- Static TF-->
+  <node pkg="tf" type="static_transform_publisher" name="odom_tf_broadcaster" args="0 0 0 0 0 0 map odom 10" />
+  <node pkg="tf" type="static_transform_publisher" name="base_link_tf_broadcaster" args="0 0 0.13 0 0 0 base_footprint base_link 10" />
+  <node pkg="tf" type="static_transform_publisher" name="laser_tf_broadcaster" args="0 0 0.03 0 0 0 base_link laser 10" />
+
+  <!-- CuGo -->
+  <!--node name="cugo_ros_control" pkg="cugo_ros_control" type="cugo_ros_control"-->
+  <include file="$(find cugo_ros_control)/launch/bringup/cugo_ros_control.launch" />
+
+  <!-- LiDAR -->
+  <include file="$(find cugo_ros_control)/launch/bringup/rplidar_cugov3.launch" />
+
+  <!-- IMU -->
+  <include file="$(find wit_node)/launch/wit.launch" />
+
+  <!-- Cartgrapher -->
+  <node name="cartographer_node" pkg="cartographer_ros"
+       type="cartographer_node" args="
+           -configuration_directory $(find cugo_ros_control)/config/slam
+           -configuration_basename cugo_lds_2d.lua"
+       output="screen">
+     <!--remap from="echoes" to="scan" /-->
+     <!--remap from="odom" to="/cugo_ros_control/odom" /-->
+   </node>
+
+   <node name="cartographer_occupancy_grid_node" pkg="cartographer_ros"
+       type="cartographer_occupancy_grid_node" args="-resolution 0.05" />
+
+  <!-- rviz -->
+  <node name="rviz" pkg="rviz" type="rviz" required="true"
+      args="-d $(find cartographer_ros)/configuration_files/demo_2d.rviz" />
+
+
+</launch>
