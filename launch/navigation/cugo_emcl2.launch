@@ -1,6 +1,6 @@
 <launch>
   <!-- Arguments -->
-  <arg name="scan_topic"     default="scan_filtered"/>
+  <arg name="scan_topic"     default="scan"/>
   <arg name="initial_pose_x" default="0.0"/>
   <arg name="initial_pose_y" default="0.0"/>
   <arg name="initial_pose_a" default="0.0"/>
@@ -9,8 +9,7 @@
   <node pkg="emcl2" type="emcl2_node" name="emcl2_node" output="screen">
 
     <param name="odom_freq"                 value="20"/>
-    <!--param name="num_particles"             value="500"/-->
-    <param name="num_particles"             value="300"/>
+    <param name="num_particles"             value="500"/>
 
     <param name="odom_frame_id"             value="odom"/>
     <param name="footprint_frame_id"        value="base_footprint"/>

@@ -1,0 +1,40 @@
+<launch>
+  <!-- Set tf -->
+  <node pkg="tf" type="static_transform_publisher" name="world_to_map" args="0 0 0 0 0 0 world map 10" />
+ <!--node pkg="tf" type="static_transform_publisher" name="odom_tf_broadcaster" args="0 0 0 0 0 0 map odom 10" /-->
+  <node pkg="tf" type="static_transform_publisher" name="base_link_tf_broadcaster" args="0 0 0.13 0 0 0 base_footprint base_link 10" />
+  <node pkg="tf" type="static_transform_publisher" name="laser_tf_broadcaster" args="0 0 0.03 3.14 0 0 base_link laser 10" />
+  <!-- base_link->laser はRPLIDARの原点が180度ずれているのでtfで回転 -->
+
+  <!-- Arguments -->
+  <arg name="map_file" default="$(find cugo_ros_control)/maps/map.yaml"/>
+  <arg name="open_rviz" default="true"/>
+  <arg name="move_forward_only" default="false"/>
+
+  <!-- CuGo -->
+  <include file="$(find cugo_ros_control)/launch/bringup/cugo_ros_control.launch" />
+
+  <!-- LiDAR -->
+  <include file="$(find cugo_ros_control)/launch/bringup/rplidar_cugov3.launch" />
+
+  <!-- IMU -->
+  <include file="$(find wit_node)/launch/wit.launch" />
+
+  <!-- Map server -->
+  <node pkg="map_server" name="map_server" type="map_server" args="$(arg map_file)"/>
+
+  <!-- EMCL2 -->
+  <include file="$(find cugo_ros_control)/launch/navigation/cugo_emcl2.launch"/>
+
+  <!-- move_base -->
+  <include file="$(find cugo_ros_control)/launch/navigation/cugo_move_base.launch">
+    <arg name="move_forward_only" value="$(arg move_forward_only)"/>
+  </include>
+
+  <!-- rviz -->
+  <group if="$(arg open_rviz)">
+    <node pkg="rviz" type="rviz" name="rviz" required="true"
+          args="-d $(find cugo_ros_control)/rviz/cugo_navigation.rviz"/>
+  </group>
+
+</launch>
