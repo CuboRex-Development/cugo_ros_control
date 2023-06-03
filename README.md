@@ -10,12 +10,13 @@ Arduinoドライバのリポジトリはこちら： https://github.com/CuboRex-
 - [Installation](#installation)
 - [Usage](#usage)
 - [Topics and Parameters](#topics-and-parameters)
+- [UDP Protocol](#udp-protocol)
 - [Note](#note)
 - [License](#license)
 
 # Features
 CuGo-ROS-ArduinoDriverに対して、/cmd_velのベクトルを達成するためのロボットのL/Rの回転数を計算し指示を投げます。また、Arduinoからエンコーダのカウント数を受け取ることでロボットのオドメトリ座標を計算し、/odomを生成しPublishします。
-Arduinoとの通信はUDP通信にて実現します。ロボット内のEdgeルータに対して、有線Ethernetケーブルまたは、WiFiに接続することでArduinoと通信することができます。Arduinoドライバで受付IPを指定し、そのIPに対してUDP信号を投げます。デフォルトでは、192.168.8.216に対して投げます。必要に応じて変更してください。
+Arduinoとの通信はUDP通信にて実現します。ロボット内のEdgeルータに対して、有線Ethernetケーブルまたは、WiFiに接続することでArduinoと通信することができます。Arduinoドライバで受付IPを指定し、そのIPに対してUDP信号を投げます。デフォルトでは、192.168.11.216に対して投げます。必要に応じて変更してください。
 
 # Requirement
 - OS: Ubuntu 20.04.4 LTS
@@ -41,7 +42,6 @@ $ source ~/your/ros_workspace/catkin_ws/devel/setup.bash
 ~~~
 $ roslaunch cugo_ros_control cugo_ros_control.launch
 ~~~
-→ノード名が旧名なので、"cugo-ros-controller"に後ほど変更します。
 
 ### rosrunを用いた起動方法
 
@@ -62,12 +62,24 @@ $ roslaunch cugo_ros_control teleop_twist_keyboard.launch
 ### Published Topics
 - /odom ([nav_msgs/Odometry](http://docs.ros.org/en/noetic/api/nav_msgs/html/msg/Odometry.html))
   - rosrunを用いた起動時のトピック名: /cugo_ros_control/odom
-- /tf ([tf2_msgs/TFMessage](http://docs.ros.org/en/jade/api/tf2_msgs/html/msg/TFMessage.html))
+- /tf ([tf2_msgs/TFMessage](https://docs.ros.org/en/noetic/api/tf2_msgs/html/msg/TFMessage.html))
 
 ### Subscribed Topics
 - /cmd_vel ([geometry_msgs/Twist](http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/Twist.html))
 
 ### Parameters
+- ~ODOMETRY_DISPLAY (boolean, default: true)
+  - オドメトリの表示切替フラグ
+- ~PARAMETERS_DISPLAY (boolean, default: false)
+  - パラメータの表示切替フラグ
+- ~TARGET_RPM_DISPLAY (boolean, default: true)
+  - RPMの表示切替フラグ
+- ~SENT_PACKET_DISPLAY (boolean, default: false)
+  - 送信パケットの表示切替フラグ
+- ~RECV_PACKET_DISPLAY (boolean, default: true)
+  - 受信パケットの表示切替フラグ
+- ~READ_DATA_DISPLAY (boolean, default: true)
+  - 受信パケットから抽出したデータの表示切替フラグ
 - ~arduino_addr (string, default: 192.168.11.216)
   - Arduinoドライバの通信受付IPアドレス
 - ~arduino_port (int, default: 8888)
@@ -82,6 +94,8 @@ $ roslaunch cugo_ros_control teleop_twist_keyboard.launch
   - オドメトリフレームID
 - ~reduction_ratio (float, default: 1.0)
   - 減速比
+- ~source_port (int, default: 8888)
+  - ROSノードの通信受付ポート番号
 - ~timeout (float, default: 0.05)
   - 通信タイムアウトまでの時間[sec]
 - ~tread (float, default: 0.380)
