@@ -9,6 +9,13 @@ def generate_launch_description():
             executable='cugo_ros2_control',
             output='screen',
             parameters=[
+                {'ODOMETRY_DISPLAY': True},
+                {'PARAMETERS_DISPLAY': False},
+                {'TARGET_RPM_DISPLAY': True},
+                {'SENT_PACKET_DISPLAY': False},
+                {'RECV_PACKET_DISPLAY': True},
+                {'READ_DATA_DISPLAY': True},
+
                 {'timeout': 0.05},
                 {'wheel_radius_l': 0.03858}, # default: CuGO V3
                 {'wheel_radius_r': 0.03858}, # default: CuGO V3

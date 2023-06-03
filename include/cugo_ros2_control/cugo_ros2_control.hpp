@@ -55,6 +55,10 @@ class CugoController : public rclcpp::Node
     void view_parameters();
     void view_send_error();
     void view_recv_error();
+    void view_recv_packet(unsigned char*, int);
+    void view_sent_packet(unsigned char*, int);
+    void view_target_rpm();
+    void view_read_data();
 
     void init_time();
     void init_UDP();
@@ -78,6 +82,15 @@ class CugoController : public rclcpp::Node
       uint16_t checksum;
     };
 
+    // display parameters
+    bool ODOMETRY_DISPLAY = true;
+    bool PARAMETERS_DISPLAY = true;
+    bool RECV_PACKET_DISPLAY = true;
+    bool SENT_PACKET_DISPLAY = true;
+    bool TARGET_RPM_DISPLAY = true;
+    bool READ_DATA_DISPLAY = true;
+
+    // parameters
     float timeout;
     float wheel_radius_l;
     float wheel_radius_r;
