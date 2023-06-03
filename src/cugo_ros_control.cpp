@@ -7,9 +7,9 @@ CugoController::CugoController(ros::NodeHandle nh)
 
   // grab the display parameters
   nh.param("ODOMETRY_DISPLAY", ODOMETRY_DISPLAY, true);
-  nh.param("PARAMETERS_DISPLAY", PARAMETERS_DISPLAY, true);
+  nh.param("PARAMETERS_DISPLAY", PARAMETERS_DISPLAY, false);
   nh.param("RECV_PACKET_DISPLAY", RECV_PACKET_DISPLAY, true);
-  nh.param("SENT_PACKET_DISPLAY", SENT_PACKET_DISPLAY, true);
+  nh.param("SENT_PACKET_DISPLAY", SENT_PACKET_DISPLAY, false);
   nh.param("TARGET_RPM_DISPLAY", TARGET_RPM_DISPLAY, true);
   nh.param("READ_DATA_DISPLAY", READ_DATA_DISPLAY, true);
 
