@@ -64,21 +64,16 @@ uint16_t CugoController::calculate_checksum(const void* data, size_t size, size_
 
 float CugoController::check_overflow(float diff_, float max_)
 {
-  //std::cout << "check_overflow" << std::endl;;
   // upper limit
   if (diff_ > max_ * 0.9) {
     diff_ = diff_ - max_ * 2;
     ROS_WARN("Overflow max!: %f", diff_);
-    //std::cout << "Overflow: " << diff_ << std::endl;
-    //std::cout << "Overflow max!" << std::endl;
     return diff_;
   }
   // lower limit
   if (diff_ < -max_ * 0.9) {
     diff_ = diff_ + max_ * 2;
     ROS_WARN("Overflow min!: %f", diff_);
-    //std::cout << "Overflow: " << diff_ << std::endl;
-    //std::cout << "Overflow min!" << std::endl;
     return diff_;
   }
   return diff_;
@@ -102,7 +97,6 @@ void CugoController::calc_odom()
 
 void CugoController::UDP_send_string_cmd()
 {
-  // std::cout << "UDP_send_string_cmd" << std::endl;
   UDP_send_time = ros::Time::now();
   std::string send_data = std::to_string(target_rpm_l) + "," + std::to_string(target_rpm_r) + "\n";
   sendto(sock, send_data.c_str(), send_data.length(), 0, (struct sockaddr *)&remote_addr, sizeof(remote_addr));
@@ -207,7 +201,6 @@ void CugoController::UDP_send_cmd()
     view_send_error();
   }
 
-  // std::cout << "send_len: " << send_len << std::endl;
   view_sent_packet(packet, send_len);
   delete[] packet;
 }
@@ -578,12 +571,10 @@ void CugoController::close_UDP()
 
 void CugoController::count2twist()
 {
-  // std::cout << "\ncount2twist" << std::endl;
   float diff_time = (recv_time - last_recv_time).toSec();
   // std::cout << "diff_time: " << diff_time << std::endl;
   if (diff_time != 0.0)
   {
-    // std::cout << "calc twist" << std::endl;
     int count_diff_l = recv_encoder_l - last_recv_encoder_l;
     int count_diff_r = recv_encoder_r - last_recv_encoder_r;
     last_recv_encoder_l = recv_encoder_l;
@@ -621,13 +612,11 @@ void CugoController::count2twist()
 
 void CugoController::twist2rpm()
 {
-  // std::cout << "\ntwist2rpm" << std::endl;
   float omega_l = vector_v / wheel_radius_l - tread * vector_omega / (2 * wheel_radius_l);
   float omega_r = vector_v / wheel_radius_r + tread * vector_omega / (2 * wheel_radius_r);
   target_rpm_l = omega_l * 60 / (2 * M_PI);
   target_rpm_r = omega_r * 60 / (2 * M_PI);
 
-  //std::cout << target_rpm_l << ", " << target_rpm_r << std::endl;
   view_target_rpm();
 }
 
@@ -682,7 +671,6 @@ void CugoController::check_stop_cmd_vel()
   float subscribe_duration = (ros::Time::now() - subscribe_time).toSec();
   if (subscribe_duration > ((float)stop_motor_time / 1000))
   {
-    //std::cout << "/cmd_vel disconnect...\nset target rpm 0.0" << std::endl;
     ROS_WARN("/cmd_vel disconnect...\nset target rpm 0.0");
     vector_v = 0.0;
     vector_omega = 0.0;
@@ -691,14 +679,12 @@ void CugoController::check_stop_cmd_vel()
 
 void CugoController::send_rpm_MCU()
 {
-  // std::cout << "\nsend_rpm_MCU" << std::endl;
   UDP_send_cmd(); // binary
   //UDP_send_string_cmd(); // string
 }
 
 void CugoController::recv_count_MCU()
 {
-  // std::cout << "\nrecv_count_MCU" << std::endl;
   unsigned char buf[UDP_HEADER_SIZE + UDP_BUFF_SIZE];
   // バッファの初期化
   memset(buf, 0x00, sizeof(buf));
@@ -714,25 +700,6 @@ void CugoController::recv_count_MCU()
   // 受信バッファがある場合
   else
   {
-    /*
-    // 受信したパケットの表示
-    printf("-------received data-------\n");
-    // ヘッダの表示
-    printf("header\n");
-    for(int i=0;i<UDP_HEADER_SIZE;i++)
-    {
-      printf("%3hhu ", buf[i]);
-    }
-    printf("\n");
-    // ボディデータの表示
-    printf("data\n");
-    for(int i=UDP_HEADER_SIZE;i<UDP_BUFF_SIZE;i++)
-    {
-      printf("%3hhu ", buf[i]);
-      if ((i+1)%8==0) printf("\n");
-    }
-    printf("\n");
-    */
     view_recv_packet(buf, recv_len);
 
     // エラーカウントのリセット
@@ -765,7 +732,6 @@ void CugoController::recv_count_MCU()
       alt_recv_encoder_l = recv_encoder_l;
       alt_recv_encoder_r = recv_encoder_r;
 
-      //std::cout << "recv_encoder: " << recv_encoder_l << ", " << recv_encoder_r << std::endl;
       view_read_data();
     }
   }
@@ -783,7 +749,6 @@ void CugoController::node_shutdown()
   close_UDP();
   cmd_vel_sub.shutdown();
   ros::shutdown();
-  //std::cout << "node_shutdown" << std::endl;
 }
 
 int main(int argc, char **argv)
