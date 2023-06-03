@@ -4,65 +4,72 @@ CuGoをROSで制御する際、ROS開発キットに付属するArduinoに対し
 
 Arduinoドライバのリポジトリはこちら： https://github.com/CuboRex-Development/cugo-ros-arduinodriver.git
 
-English Documents here：
-
-正式リリースするまでは、beta branchで管理しますので、そちらをご参照ください。
-
 # Table of Contents
 - [Features](#features)
 - [Requirement](#requirement)
 - [Installation](#installation)
 - [Usage](#usage)
 - [Topics and Parameters](#topics-and-parameters)
+- [UDP Protocol](#udp-protocol)
 - [Note](#note)
 - [License](#license)
 
 # Features
 CuGo-ROS-ArduinoDriverに対して、/cmd_velのベクトルを達成するためのロボットのL/Rの回転数を計算し指示を投げます。また、Arduinoからエンコーダのカウント数を受け取ることでロボットのオドメトリ座標を計算し、/odomを生成しPublishします。
-Arduinoとの通信はUDP通信にて実現します。ロボット内のEdgeルータに対して、有線Ethernetケーブルまたは、WiFiに接続することでArduinoと通信することができます。Arduinoドライバで受付IPを指定し、そのIPに対してUDP信号を投げます。デフォルトでは、192.168.8.216に対して投げます。必要に応じて変更してください。
+Arduinoとの通信はUDP通信にて実現します。ロボット内のEdgeルータに対して、有線Ethernetケーブルまたは、WiFiに接続することでArduinoと通信することができます。Arduinoドライバで受付IPを指定し、そのIPに対してUDP信号を投げます。デフォルトでは、192.168.11.216に対して投げます。必要に応じて変更してください。
 
 # Requirement
 - OS: Ubuntu 20.04.4 LTS
-- ROS Distribution: Noetic Ninjemys
+- ROS Distribution: ROS2 Foxy Fitzroy
 
 # Installation
-ROS環境がない場合は[ROS Wiki](http://wiki.ros.org/ja/noetic/Installation/Ubuntu)を参照しROSをインストールしてください。
+ROS2環境がない場合は[ROS2 Documentation](https://docs.ros.org/en/foxy/Installation/Ubuntu-Install-Debians.html)を参照しROS2をインストールしてください。
 
-ROSのワークスペース内でgit cloneしたのち、catkin buildしてください。
+ROS2のワークスペース内でgit cloneしたのち、colcon buildしてください。
 ~~~
-$ cd ~/your/ros_workspace/catkin_ws/src
+$ cd ~/your/ros_workspace/ros2_ws/src
 $ git clone https://github.com/CuboRex-Development/cugo-ros-controller.git
 $ cd ../..
-$ catkin build
-$ source ~/your/ros_workspace/catkin_ws/devel/setup.bash
+$ colcon build
+$ source ~/your/ros_workspace/ros2_ws/install/local_setup.bash
 ~~~
 
 # Usage
 
-## 実行方法
+###  (推奨) ros2 launchを用いた起動方法
+下記のコマンドで起動します。ros2 launchを用いて起動する際、いくつかのパラメータを指定することができます。詳細は[Parameters](#parameters)の項目を参照してください。
 ~~~
-$ roslaunch CuGoPy_Controller start_cugo_controller.launch
+$ ros2 launch cugo_ros2_control cugo_ros2_control_launch.py
 ~~~
-→ノード名が旧名なので、"cugo-ros-controller"に後ほど変更します。
 
-以下のLaunchで起動すると、joy_nodeやteleop_joy_nodeを同時に起動することができます。
+### ros2 runを用いた起動方法
+
+次のコマンドで起動します。
 ~~~
-$ roslaunch CuGoPy_Controller start_ps4_controller.launch
-~~~
-他に、任意のノードと同時に起動したい場合、こちらのlaunchファイルを編集して使用してください。
-~~~
-$ roslaunch CuGoPy_Controller start_any_apps.launch
+$ ros2 run cugo_ros2_control cugo_ros2_control
 ~~~
 
 # Topics and Parameters
 ## Published Topics
-- /cugo_controller/odom ([nav_msgs/Odometry](http://docs.ros.org/en/noetic/api/nav_msgs/html/msg/Odometry.html))
-- /tf ([tf2_msgs/TFMessage](http://docs.ros.org/en/jade/api/tf2_msgs/html/msg/TFMessage.html))
+- /odom ([nav_msgs/msg/Odometry](https://docs.ros2.org/foxy/api/nav_msgs/msg/Odometry.html))
+- /tf ([tf2_msgs/msg/TFMessage](https://docs.ros2.org/latest/api/tf2_msgs/msg/TFMessage.html))
 
 ## Subscribed Topics
-- /cmd_vel ([geometry_msgs/Twist](http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/Twist.html))
+- /cmd_vel ([geometry_msgs/msg/Twist](http://docs.ros.org/en/melodic/api/geometry_msgs/html/msg/Twist.html))
 
 ## Parameters
+- ~ODOMETRY_DISPLAY (boolean, default: True)
+  - オドメトリの表示切替フラグ
+- ~PARAMETERS_DISPLAY (boolean, default: False)
+  - パラメータの表示切替フラグ
+- ~TARGET_RPM_DISPLAY (boolean, default: True)
+  - RPMの表示切替フラグ
+- ~SENT_PACKET_DISPLAY (boolean, default: False)
+  - 送信パケットの表示切替フラグ
+- ~RECV_PACKET_DISPLAY (boolean, default: True)
+  - 受信パケットの表示切替フラグ
+- ~READ_DATA_DISPLAY (boolean, default: True)
+  - 受信パケットから抽出したデータの表示切替フラグ
 - ~arduino_addr (string, default: 192.168.8.216)
   - Arduinoドライバの通信受付IPアドレス
 - ~arduino_port (int, default: 8888)
@@ -75,6 +82,8 @@ $ roslaunch CuGoPy_Controller start_any_apps.launch
 - ~odom_frame_id (string, default: odom)
 - ~reduction_ratio (float, default: 1.0)
   - 減速比
+- ~source_port (int, default: 8888)
+  - ROSノードの通信受付ポート番号
 - ~timeout (float, default: 0.05)
   - 通信タイムアウトまでの時間[sec]
 - ~tread (float, default: 0.380)
@@ -85,6 +94,27 @@ $ roslaunch CuGoPy_Controller start_any_apps.launch
   - 右タイヤ半径[m]
 
 上記のパラメータはlaunchファイルで設定されています。
+
+# UDP Protocol
+CuGo-ROS-ArduinoDriverと、ヘッダ8バイト・ボディ64バイトの合計72バイトから構成されるデータを通信しています。
+ボディデータに格納されるデータの一覧は以下の通りになります。
+なお、扱うデータは今後拡張する予定です。
+
+### Arduinoドライバへの送信データ
+
+Data Name      | Data Type  | Data Size(byte) | Start Address in PacketBody | Data Abstract
+---------------|------------|-----------------|-----------------------------|--------------------
+TARGET_RPM_L   | float      | `4`             | 0                           | RPM指令値(左モータ)
+TARGET_RPM_R   | float      | `4`             | 4                           | RPM指令値(右モータ)
+
+
+### Arduinoドライバからの受信データ
+
+Data Name      | Data Type  | Data Size(byte) | Start Address in PacketBody | Data Abstract
+---------------|------------|-----------------|-----------------------------|-----------------
+RECV_ENCODER_L | float      | `4`             | 0                           | 左エンコーダのカウント数
+RECV_ENCODER_R | float      | `4`             | 4                           | 右エンコーダのカウント数
+
 
 # Note
 
