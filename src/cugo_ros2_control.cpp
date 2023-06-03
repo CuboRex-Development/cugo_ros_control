@@ -30,6 +30,8 @@ CugoController::CugoController()
   arduino_addr = this->get_parameter("arduino_addr").as_string();
   this->declare_parameter("arduino_port", 8888);
   arduino_port = this->get_parameter("arduino_port").as_int();
+  this->declare_parameter("source_port", 8888);
+  source_port = this->get_parameter("source_port").as_int();
   this->declare_parameter("odom_frame_id", std::string("odom"));
   odom_frame_id = this->get_parameter("odom_frame_id").as_string();
   this->declare_parameter("odom_child_frame_id", std::string("base_link"));
@@ -170,7 +172,7 @@ void CugoController::UDP_send_cmd()
 
   // UDPヘッダの作成
   UdpHeader header;
-  header.sourcePort = 8888; // TODO
+  header.sourcePort = htons(source_port);
   header.destinationPort = htons(arduino_port);
   header.length = sizeof(UdpHeader) + sizeof(body);
   header.checksum = checksum;
@@ -181,7 +183,7 @@ void CugoController::UDP_send_cmd()
 
   // UDPパケットの送信
   UDP_send_time = this->get_clock()->now();
-  int send_len = sendto(sock, (unsigned char*) packet, header.length, 0, (struct sockaddr *)&addr, sizeof(addr));
+  int send_len = sendto(sock, (unsigned char*) packet, header.length, 0, (struct sockaddr *)&remote_addr, sizeof(remote_addr));
 
   // 送信失敗時
   if (send_len <= 0)
@@ -210,6 +212,7 @@ void CugoController::view_parameters()
 {
   std::cout << "arduino_addr: " << arduino_addr << std::endl;
   std::cout << "arduino_port: " << arduino_port << std::endl;
+  std::cout << "source_port: " << source_port << std::endl;
   std::cout << "encoder_max: " << encoder_max << std::endl;
   std::cout << "encoder_resolution: " << encoder_resolution << std::endl;
   std::cout << "odom_child_frame_id: " << odom_child_frame_id << std::endl;
@@ -224,21 +227,42 @@ void CugoController::view_parameters()
 void CugoController::init_UDP()
 {
   sock = socket(AF_INET, SOCK_DGRAM, 0);
-  addr.sin_family = AF_INET; // IPv4
-  addr.sin_port = htons(arduino_port);
-  addr.sin_addr.s_addr = inet_addr(arduino_addr.c_str()); // INADDR_ANYの場合すべてのアドレスからのパケットを受信する
 
+  // 自身の受信用ipアドレス、ポート設定
+  local_addr.sin_family = AF_INET; // IPv4
+  local_addr.sin_port = htons(source_port);
+  local_addr.sin_addr.s_addr = INADDR_ANY; // INADDR_ANYの場合すべてのアドレスからのパケットを受信する
+
+  // 送信先arduinoのipアドレス、ポート設定
+  remote_addr.sin_family = AF_INET; // IPv4
+  remote_addr.sin_port = htons(arduino_port);
+  remote_addr.sin_addr.s_addr = inet_addr(arduino_addr.c_str());
+
+  // 受信タイムアウトの設定
   struct timeval tv;
   tv.tv_sec = timeout;
   tv.tv_usec = 0;
-
-  if (setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv)) < 0)
+  int setsockopt_status = setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv));
+  if (setsockopt_status < 0)
   {
     perror("setsockopt");
+    RCLCPP_ERROR(this->get_logger(), "setsockopt failed");
+    throw std::logic_error("an exception occured: setsockopt failed");
     return;
   }
 
-  bind(sock, (const struct sockaddr *)&addr, sizeof(addr));
+  // 受信ポート設定
+  int bind_status;
+  bind_status = bind(sock, (const struct sockaddr *)&local_addr, sizeof(local_addr));
+  if (bind_status < 0)
+  {
+    perror("bind failed");
+    RCLCPP_ERROR(this->get_logger(), "bind failed");
+    throw std::logic_error("an exception occured: bind failed");
+    return;
+  }
+
+  // ノンブロッキングモードの設定
   int val = 1;
   ioctl(sock, FIONBIO, &val);
 }

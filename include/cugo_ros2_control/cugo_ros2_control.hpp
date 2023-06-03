@@ -88,6 +88,7 @@ class CugoController : public rclcpp::Node
     std::string arduino_addr = "192.168.8.216";
     //std::string arduino_addr = "127.0.0.1"; // テスト用
     int arduino_port = 8888;
+    int source_port = 8888;
     std::string odom_frame_id;
     std::string odom_child_frame_id;
 
@@ -129,7 +130,8 @@ class CugoController : public rclcpp::Node
 
     // UDP
     int sock;
-    struct sockaddr_in addr;
+    struct sockaddr_in local_addr; // 受信用
+    struct sockaddr_in remote_addr; // 送信用
 
     // TODO 時間系
     rclcpp::Time subscribe_time;
