@@ -4,7 +4,7 @@ CugoController::CugoController()
 : Node("cugo_ros2_control")
 {
   cmd_vel_sub_ = this->create_subscription<geometry_msgs::msg::Twist>(
-      "cmd_vel", 10, std::bind(&CugoController::cmd_vel_callback, this, _1));
+      "/cmd_vel", 10, std::bind(&CugoController::cmd_vel_callback, this, _1));
 
   // Initialize the transform broadcaster
   tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
@@ -712,6 +712,7 @@ int main(int argc, char * argv[])
     {
       node->check_failsafe();
       node->check_stop_cmd_vel();
+      node->twist2rpm();
       node->send_rpm_MCU();
       node->recv_count_MCU();
       node->count2twist();
