@@ -18,6 +18,7 @@ def generate_launch_description():
                 {"encoder_resolution": 2048},
                 {'arduino_addr': '192.168.11.216'},
                 {'arduino_port': 8888},
+                {'source_port': 8888},
                 {'odom_frame_id': 'odom'},
                 {'odom_child_frame_id': 'base_link'}
             ]
