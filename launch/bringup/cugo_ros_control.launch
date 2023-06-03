@@ -14,6 +14,7 @@
         <param name="reduction_ratio" value="1.0" />
         <param name="encoder_resolution" value="2048" />
         <param name="encoder_max" value="2147483647" />
+        <param name="source_port" value="8888" />
         <param name="arduino_port" value="8888" />
         <param name="arduino_addr" value="192.168.11.216" />
         <param name="odom_frame_id" value="odom" />
