@@ -9,16 +9,16 @@ CugoController::CugoController()
   // Initialize the transform broadcaster
   tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
 
-  odom_pub_ = this->create_publisher<nav_msgs::msg::Odometry>("odom", 10);
+  odom_pub_ = this->create_publisher<nav_msgs::msg::Odometry>("/odom", 10);
 
   // パラメータ読み込み
   this->declare_parameter("ODOMETRY_DISPLAY", true);
   ODOMETRY_DISPLAY = this->get_parameter("ODOMETRY_DISPLAY").as_bool();
-  this->declare_parameter("PARAMETERS_DISPLAY", true);
+  this->declare_parameter("PARAMETERS_DISPLAY", false);
   PARAMETERS_DISPLAY = this->get_parameter("PARAMETERS_DISPLAY").as_bool();
   this->declare_parameter("RECV_PACKET_DISPLAY", true);
   RECV_PACKET_DISPLAY = this->get_parameter("RECV_PACKET_DISPLAY").as_bool();
-  this->declare_parameter("SENT_PACKET_DISPLAY", true);
+  this->declare_parameter("SENT_PACKET_DISPLAY", false);
   SENT_PACKET_DISPLAY = this->get_parameter("SENT_PACKET_DISPLAY").as_bool();
   this->declare_parameter("TARGET_RPM_DISPLAY", true);
   TARGET_RPM_DISPLAY = this->get_parameter("TARGET_RPM_DISPLAY").as_bool();
