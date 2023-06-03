@@ -43,6 +43,14 @@ class CugoController {
       uint16_t checksum;
     };
 
+    // display parameters
+    bool ODOMETRY_DISPLAY = true;
+    bool PARAMETERS_DISPLAY = true;
+    bool RECV_PACKET_DISPLAY = true;
+    bool SENT_PACKET_DISPLAY = true;
+    bool TARGET_RPM_DISPLAY = true;
+    bool READ_DATA_DISPLAY = true;
+
     // parameters
     //std::string device_name = "/dev/ttyUSB0";
     //int baudrate       = 115200;
@@ -139,6 +147,10 @@ class CugoController {
     void view_parameters();
     void view_send_error();
     void view_recv_error();
+    void view_recv_packet(unsigned char*, int);
+    void view_sent_packet(unsigned char*, int);
+    void view_target_rpm();
+    void view_read_data();
 
     //void init_serial();
     void init_time();

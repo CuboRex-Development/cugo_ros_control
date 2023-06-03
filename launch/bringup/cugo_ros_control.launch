@@ -1,5 +1,12 @@
 <launch>
     <node name="cugo_ros_control" pkg="cugo_ros_control" type="cugo_ros_control" output="screen" >
+        <param name="ODOMETRY_DISPLAY" value="true" />
+        <param name="PARAMETERS_DISPLAY" value="false" />
+        <param name="TARGET_RPM_DISPLAY" value="true" />
+        <param name="SENT_PACKET_DISPLAY" value="false" />
+        <param name="RECV_PACKET_DISPLAY" value="true" />
+        <param name="READ_DATA_DISPLAY" value="true" />
+
         <param name="timeout" value="0.05" />
         <param name="wheel_radius_l" value="0.03858" />
         <param name="wheel_radius_r" value="0.03858" />
