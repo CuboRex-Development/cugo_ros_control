@@ -8,7 +8,7 @@
   <!-- EMCL2 -->
   <node pkg="emcl2" type="emcl2_node" name="emcl2_node" output="screen">
 
-    <param name="odom_freq"                 value="20"/>
+    <param name="odom_freq"                 value="10"/>
     <param name="num_particles"             value="500"/>
 
     <param name="odom_frame_id"             value="odom"/>

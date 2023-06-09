@@ -13,7 +13,6 @@
     <rosparam file="$(find cugo_ros_control)/config/navigation/local_costmap_params.yaml" command="load"/>
     <rosparam file="$(find cugo_ros_control)/config/navigation/global_costmap_params.yaml" command="load"/>
     <rosparam file="$(find cugo_ros_control)/config/navigation/move_base_params.yaml" command="load" />
-    <rosparam file="$(find cugo_ros_control)/config/navigation/move_base_params.yaml" command="load" />
     <rosparam file="$(find cugo_ros_control)/config/navigation/dwa_local_planner_params.yaml" command="load" />
     <remap from="cmd_vel" to="$(arg cmd_vel_topic)"/>
     <remap from="odom" to="$(arg odom_topic)"/>

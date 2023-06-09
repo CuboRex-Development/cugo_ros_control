@@ -1,5 +1,5 @@
 <launch>
-    <node name="cugo_ros_control" pkg="cugo_ros_control" type="cugo_ros_control" output="screen" >
+    <node name="cugo_ros_control" pkg="cugo_ros_control" type="cugo_ros_control" >
         <param name="ODOMETRY_DISPLAY" value="true" />
         <param name="PARAMETERS_DISPLAY" value="false" />
         <param name="TARGET_RPM_DISPLAY" value="true" />
