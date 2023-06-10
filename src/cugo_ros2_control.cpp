@@ -365,6 +365,11 @@ void CugoController::init_UDP()
   ioctl(sock, FIONBIO, &val);
 }
 
+bool CugoController::get_first_recv_flag()
+{
+  return first_recv_flag;
+}
+
 void CugoController::close_UDP()
 {
   std::cout << "UDP port close..." << std::endl;
@@ -492,6 +497,13 @@ void CugoController::recv_count_MCU()
       // 故障代替値の更新
       alt_recv_encoder_l = recv_encoder_l;
       alt_recv_encoder_r = recv_encoder_r;
+
+      if (!first_recv_flag)
+      {
+        first_recv_flag = true;
+        last_recv_encoder_l = recv_encoder_l;
+        last_recv_encoder_r = recv_encoder_r;
+      }
 
       view_read_data();
     }
@@ -791,6 +803,11 @@ int main(int argc, char * argv[])
   {
     node->init_time();
     node->init_UDP();
+    while(!node->get_first_recv_flag())
+    {
+      node->send_rpm_MCU();
+      node->recv_count_MCU();
+    }
 
     while (rclcpp::ok())
     {

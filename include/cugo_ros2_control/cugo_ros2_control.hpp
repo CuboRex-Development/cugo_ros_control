@@ -73,6 +73,8 @@ class CugoController : public rclcpp::Node
     void recv_count_MCU();
     void node_shutdown();
 
+    bool get_first_recv_flag();
+
   private:
     struct UdpHeader
     {
@@ -130,6 +132,7 @@ class CugoController : public rclcpp::Node
     float vy_dt = 0.0;
     float theta_dt = 0.0;
     bool acc_limit_over_flag = false;
+    bool first_recv_flag = false;
 
     int recv_err_count = 0;
     int checksum_err_count = 0;
