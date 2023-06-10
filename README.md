@@ -70,7 +70,7 @@ $ ros2 run cugo_ros2_control cugo_ros2_control
   - 受信パケットの表示切替フラグ
 - ~READ_DATA_DISPLAY (boolean, default: True)
   - 受信パケットから抽出したデータの表示切替フラグ
-- ~arduino_addr (string, default: 192.168.8.216)
+- ~arduino_addr (string, default: 192.168.11.216)
   - Arduinoドライバの通信受付IPアドレス
 - ~arduino_port (int, default: 8888)
   - Arduinoドライバの通信受付ポート番号
@@ -79,7 +79,9 @@ $ ros2 run cugo_ros2_control cugo_ros2_control
 - ~encoder_resolution (int, default: 2048)
   - エンコーダ分解能
 - ~odom_child_frame_id (string, default: base_link)
+  - オドメトリ子フレームID
 - ~odom_frame_id (string, default: odom)
+  - オドメトリフレームID
 - ~reduction_ratio (float, default: 1.0)
   - 減速比
 - ~source_port (int, default: 8888)
