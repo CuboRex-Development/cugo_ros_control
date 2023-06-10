@@ -88,6 +88,8 @@ $ ros2 run cugo_ros2_control cugo_ros2_control
   - 通信タイムアウトまでの時間[sec]
 - ~tread (float, default: 0.380)
   - トレッド幅[m]
+- ~vx_dt_max (float, default: 3.3)
+  - 最大速度(速度上限)[km/h]
 - ~wheel_radius_l (float, default: 0.03858)
   - 左タイヤ半径[m]
 - ~wheel_radius_r (float, default: 0.03858)
