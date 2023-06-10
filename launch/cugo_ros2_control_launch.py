@@ -21,6 +21,7 @@ def generate_launch_description():
                 {'wheel_radius_r': 0.03858}, # default: CuGO V3
                 {'tread': 0.460}, # default: CuGO V3
                 {'reduction_ratio': 1.0}, # default CuGO V3
+                {'vx_dt_max': 3.3}, # default CuGO V3 [km/h]
                 {'encoder_max': 2147483647}, # -2147483648 ~ 2147483647(Arduinoのlong intは32bit)
                 {"encoder_resolution": 2048},
                 {'arduino_addr': '192.168.11.216'},

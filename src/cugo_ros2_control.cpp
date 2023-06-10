@@ -50,6 +50,10 @@ CugoController::CugoController()
   this->declare_parameter("odom_child_frame_id", std::string("base_link"));
   odom_child_frame_id = this->get_parameter("odom_child_frame_id").as_string();
 
+  this->declare_parameter("vx_dt_max", (float)3.3); // default CuGO V3 [km/h]
+  vx_dt_max = this->get_parameter("vx_dt_max").as_double() * 1000 / 3600; // [m/s]
+  theta_dt_max = vx_dt_max * 2 / tread; // [m/s]
+
   view_parameters();
   //view_init();
 }
@@ -388,12 +392,28 @@ void CugoController::count2twist()
     vx_dt = (vl + vr) / 2;
     theta_dt = (vr - vl) / tread;
 
-    odom_twist_x = vx_dt / diff_time;
-    odom_twist_yaw = theta_dt / diff_time;
+    // 加速度上限を超えていないか確認
+    if(fabs(vx_dt) > fabs(vx_dt_max))
+    {
+      acc_limit_over_flag = true;
+      RCLCPP_ERROR(this->get_logger(), "over vx_dt_max, did not update odometry");
+    }
+    else if(fabs(theta_dt) > fabs(theta_dt_max))
+    {
+      acc_limit_over_flag = true;
+      RCLCPP_ERROR(this->get_logger(), "over theta_dt_max, did not update odometry");
+    }
+    else
+    {
+      odom_twist_x = vx_dt / diff_time;
+      odom_twist_yaw = theta_dt / diff_time;
 
-    // 故障代替値の更新
-    alt_odom_twist_x = odom_twist_x;
-    alt_odom_twist_yaw = odom_twist_yaw;
+      // 故障代替値の更新
+      alt_odom_twist_x = odom_twist_x;
+      alt_odom_twist_yaw = odom_twist_yaw;
+
+      acc_limit_over_flag = false;
+    }
 
     diff_err_count = 0;
   }
@@ -694,7 +714,10 @@ void CugoController::node_shutdown()
 void CugoController::odom_publish()
 {
   //RCLCPP_INFO(this->get_logger(), "Publishing odometry" );
-  calc_odom();
+  if (!acc_limit_over_flag)
+  {
+    calc_odom();
+  }
   publish();
 }
 

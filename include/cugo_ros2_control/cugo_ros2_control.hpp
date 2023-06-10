@@ -96,6 +96,8 @@ class CugoController : public rclcpp::Node
     float wheel_radius_r;
     float reduction_ratio;
     float tread;
+    float vx_dt_max;
+    float theta_dt_max;
     int encoder_resolution;
     int encoder_max; // -2147483648 ~ 2147483647(Arduinoのlong intは32bit)
     std::string arduino_addr = "192.168.8.216";
@@ -127,6 +129,7 @@ class CugoController : public rclcpp::Node
     float vx_dt = 0.0;
     float vy_dt = 0.0;
     float theta_dt = 0.0;
+    bool acc_limit_over_flag = false;
 
     int recv_err_count = 0;
     int checksum_err_count = 0;
