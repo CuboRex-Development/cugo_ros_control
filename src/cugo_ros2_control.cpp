@@ -365,9 +365,17 @@ void CugoController::init_UDP()
   ioctl(sock, FIONBIO, &val);
 }
 
-bool CugoController::get_first_recv_flag()
+void CugoController::reset_last_encoder()
 {
-  return first_recv_flag;
+  rclcpp::WallRate loop_rate(10); // 10Hz
+  while (rclcpp::ok() && !first_recv_flag)
+  {
+    std::cout << "RESETING LAST_ENCODER..." << std::endl;
+    send_rpm_MCU();
+    recv_count_MCU();
+    loop_rate.sleep();
+  }
+  std::cout << "FINISHED RESETING LAST_ENCODER!" << std::endl;
 }
 
 void CugoController::close_UDP()
@@ -803,11 +811,7 @@ int main(int argc, char * argv[])
   {
     node->init_time();
     node->init_UDP();
-    while(!node->get_first_recv_flag())
-    {
-      node->send_rpm_MCU();
-      node->recv_count_MCU();
-    }
+    node->reset_last_encoder();
 
     while (rclcpp::ok())
     {

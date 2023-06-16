@@ -73,7 +73,7 @@ class CugoController : public rclcpp::Node
     void recv_count_MCU();
     void node_shutdown();
 
-    bool get_first_recv_flag();
+    void reset_last_encoder();
 
   private:
     struct UdpHeader
