@@ -91,6 +91,8 @@ class CugoController {
     float vy_dt = 0.0;
     float theta_dt = 0.0;
 
+    bool first_recv_flag = false;
+
     // serial
     //bool start_serial_comm = false;
 
@@ -166,6 +168,8 @@ class CugoController {
     void recv_count_MCU();
     void odom_publish();
     void node_shutdown();
+
+    void reset_last_encoder();
 };
 
 #endif

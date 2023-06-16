@@ -558,6 +558,19 @@ void CugoController::init_UDP()
   ioctl(sock, FIONBIO, &val);
 }
 
+void CugoController::reset_last_encoder()
+{
+  ros::Rate loop_rate(10);
+  while (ros::ok() && !first_recv_flag)
+  {
+    std::cout << "RESETING LAST_ENCODER..." << std::endl;
+    send_rpm_MCU();
+    recv_count_MCU();
+    loop_rate.sleep();
+  }
+  std::cout << "FINISHED RESETING LAST_ENCODER!" << std::endl;
+}
+
 void CugoController::close_UDP()
 {
   std::cout << "UDP port close..." << std::endl;
@@ -732,6 +745,13 @@ void CugoController::recv_count_MCU()
       alt_recv_encoder_l = recv_encoder_l;
       alt_recv_encoder_r = recv_encoder_r;
 
+      if (!first_recv_flag)
+      {
+        first_recv_flag = true;
+        last_recv_encoder_l = recv_encoder_l;
+        last_recv_encoder_r = recv_encoder_r;
+      }
+
       view_read_data();
     }
   }
@@ -764,6 +784,7 @@ int main(int argc, char **argv)
   {
     node.init_time();
     node.init_UDP();
+    node.reset_last_encoder();
 
     while (ros::ok())
     {
