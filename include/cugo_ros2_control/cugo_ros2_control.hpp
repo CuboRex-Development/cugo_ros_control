@@ -73,7 +73,10 @@ class CugoController : public rclcpp::Node
     void recv_count_MCU();
     void node_shutdown();
 
-    void reset_last_encoder();
+    void UDP_send_initial_cmd();
+    void send_initial_cmd_MCU();
+    void recv_base_count_MCU();
+    void recv_base_encoder_count();
 
   private:
     struct UdpHeader
@@ -98,8 +101,6 @@ class CugoController : public rclcpp::Node
     float wheel_radius_r;
     float reduction_ratio;
     float tread;
-    float vx_dt_max;
-    float theta_dt_max;
     int encoder_resolution;
     int encoder_max; // -2147483648 ~ 2147483647(Arduinoのlong intは32bit)
     std::string arduino_addr = "192.168.8.216";
@@ -108,6 +109,9 @@ class CugoController : public rclcpp::Node
     int source_port = 8888;
     std::string odom_frame_id;
     std::string odom_child_frame_id;
+
+    float abnormal_translation_acc_limit = 10.0;
+    float abnormal_angular_acc_limit = 100.0*M_PI;
 
     int stop_motor_time = 500; //NavigationやコントローラからSubscriberできなかったときにモータを>止めるまでの時間(ms)
 
@@ -131,8 +135,8 @@ class CugoController : public rclcpp::Node
     float vx_dt = 0.0;
     float vy_dt = 0.0;
     float theta_dt = 0.0;
-    bool acc_limit_over_flag = false;
-    bool first_recv_flag = false;
+    bool abnormal_acc_limit_over_flag = false;
+    bool encoder_first_recv_flag = false;
 
     int recv_err_count = 0;
     int checksum_err_count = 0;
