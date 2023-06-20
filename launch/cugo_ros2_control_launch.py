@@ -1,5 +1,6 @@
 from launch import LaunchDescription
 from launch_ros.actions import Node
+import math
 
 def generate_launch_description():
     return LaunchDescription([
@@ -21,14 +22,15 @@ def generate_launch_description():
                 {'wheel_radius_r': 0.03858}, # default: CuGO V3
                 {'tread': 0.460}, # default: CuGO V3
                 {'reduction_ratio': 1.0}, # default CuGO V3
-                {'vx_dt_max': 3.3}, # default CuGO V3 [km/h]
                 {'encoder_max': 2147483647}, # -2147483648 ~ 2147483647(Arduinoのlong intは32bit)
                 {"encoder_resolution": 2048},
                 {'arduino_addr': '192.168.11.216'},
                 {'arduino_port': 8888},
                 {'source_port': 8888},
                 {'odom_frame_id': 'odom'},
-                {'odom_child_frame_id': 'base_link'}
+                {'odom_child_frame_id': 'base_link'},
+                {'abnormal_translation_acc_limit': 10.0}, # [m/s^2], default 1.0[m] translation for dt(0.1[s])
+                {'abnormal_angular_acc_limit': 100.0*math.pi} # [rad/s^2], default pi/2[rad] rotation for dt(0.1[s])
             ]
         ),
     ])

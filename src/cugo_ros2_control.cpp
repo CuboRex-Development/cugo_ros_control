@@ -284,6 +284,8 @@ void CugoController::view_parameters()
     std::cout << "tread: " << tread << std::endl;
     std::cout << "wheel_radius_l: " << wheel_radius_l << std::endl;
     std::cout << "wheel_radius_r: " << wheel_radius_r << std::endl;
+    std::cout << "abnormal_translation_acc_limit: " << abnormal_translation_acc_limit << std::endl;
+    std::cout << "abnormal_angular_acc_limit: " << abnormal_angular_acc_limit << std::endl;
     std::cout << std::endl;
   }
 }
