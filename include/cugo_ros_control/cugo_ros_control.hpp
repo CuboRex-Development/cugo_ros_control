@@ -68,6 +68,9 @@ class CugoController {
     std::string odom_frame_id;
     std::string odom_child_frame_id;
 
+    float abnormal_translation_acc_limit = 10.0;
+    float abnormal_angular_acc_limit = 100.0 * M_PI;
+
     int stop_motor_time = 500; //NavigationやコントローラからSubscriberできなかったときにモータを>止めるまでの時間(ms)
 
     float vector_v       = 0.0;
@@ -90,8 +93,8 @@ class CugoController {
     float vx_dt = 0.0;
     float vy_dt = 0.0;
     float theta_dt = 0.0;
-
-    bool first_recv_flag = false;
+    bool abnormal_acc_limit_over_flag = false;
+    bool encoder_first_recv_flag = false;
 
     // serial
     //bool start_serial_comm = false;
@@ -169,7 +172,10 @@ class CugoController {
     void odom_publish();
     void node_shutdown();
 
-    void reset_last_encoder();
+    void UDP_send_initial_cmd();
+    void send_initial_cmd_MCU();
+    void recv_base_count_MCU();
+    void recv_base_encoder_count();
 };
 
 #endif

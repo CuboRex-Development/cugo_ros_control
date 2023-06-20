@@ -29,6 +29,9 @@ CugoController::CugoController(ros::NodeHandle nh)
   nh.param("odom_frame_id", odom_frame_id, std::string("odom"));
   nh.param("odom_child_frame_id", odom_child_frame_id, std::string("base_link"));
 
+  nh.param("abnormal_translation_acc_limit", abnormal_translation_acc_limit, (float)10.0);
+  nh.param("abnormal_angular_acc_limit", abnormal_angular_acc_limit, (float)(100.0*M_PI));
+
   view_parameters();
   //view_init();
 }
@@ -205,6 +208,47 @@ void CugoController::UDP_send_cmd()
   delete[] packet;
 }
 
+void CugoController::UDP_send_initial_cmd()
+{
+  // ボディデータ用バッファの作成
+  unsigned char body[UDP_BUFF_SIZE];
+  // バッファの初期化
+  memset(body, 0x00, sizeof(body));
+
+  // バッファへのbodyデータの書き込み
+  write_float_to_buf(body, TARGET_RPM_L_PTR, target_rpm_l);
+  write_float_to_buf(body, TARGET_RPM_R_PTR, target_rpm_r);
+
+  // チェックサムを計算
+  uint16_t checksum = calculate_checksum(body, UDP_BUFF_SIZE);
+  //printf("send calc_checksum: %x\n", checksum);
+
+  // UDPヘッダの作成
+  UdpHeader header;
+  header.sourcePort = htons(source_port);
+  header.destinationPort = htons(arduino_port);
+  header.length = sizeof(UdpHeader) + sizeof(body);
+  header.checksum = checksum;
+
+  // UDPパケットの作成
+  unsigned char* packet = new unsigned char[header.length];
+  create_UDP_packet(packet, &header, body);
+
+  // UDPパケットの送信
+  UDP_send_time = ros::Time::now();
+  int send_len = sendto(sock, (unsigned char*) packet, header.length, 0, (struct sockaddr *)&remote_addr, sizeof(remote_addr));
+
+  // 送信失敗時
+  if (send_len <= 0)
+  {
+    // errnoによるエラー表示
+    view_send_error();
+  }
+
+  view_sent_packet(packet, send_len);
+  delete[] packet;
+}
+
 void CugoController::publish()
 {
   static tf::TransformBroadcaster odom_broadcaster;
@@ -277,6 +321,8 @@ void CugoController::view_parameters()
     std::cout << "tread: " << tread << std::endl;
     std::cout << "wheel_radius_l: " << wheel_radius_l << std::endl;
     std::cout << "wheel_radius_r: " << wheel_radius_r << std::endl;
+    std::cout << "abnormal_translation_acc_limit: " << abnormal_translation_acc_limit << std::endl;
+    std::cout << "abnormal_angular_acc_limit: " << abnormal_angular_acc_limit << std::endl;
     std::cout << std::endl;
   }
 }
@@ -558,17 +604,17 @@ void CugoController::init_UDP()
   ioctl(sock, FIONBIO, &val);
 }
 
-void CugoController::reset_last_encoder()
+void CugoController::recv_base_encoder_count()
 {
-  ros::Rate loop_rate(10);
-  while (ros::ok() && !first_recv_flag)
+  ros::Rate loop_rate(10); // 10Hz
+  while (ros::ok() && !encoder_first_recv_flag)
   {
-    std::cout << "RESETING LAST_ENCODER..." << std::endl;
-    send_rpm_MCU();
-    recv_count_MCU();
+    std::cout << "RECEIVING BASE ENCODER COUNT..." << std::endl;
+    send_initial_cmd_MCU();
+    recv_base_count_MCU();
     loop_rate.sleep();
   }
-  std::cout << "FINISHED RESETING LAST_ENCODER!" << std::endl;
+  std::cout << "FINISHED RECEIVING BASE ENCODER COUNT!" << std::endl;
 }
 
 void CugoController::close_UDP()
@@ -586,7 +632,8 @@ void CugoController::count2twist()
 {
   float diff_time = (recv_time - last_recv_time).toSec();
   // std::cout << "diff_time: " << diff_time << std::endl;
-  if (diff_time != 0.0)
+  // 正常時のフロー
+  if (diff_time > 0.0 && diff_time < 1.0)
   {
     int count_diff_l = recv_encoder_l - last_recv_encoder_l;
     int count_diff_r = recv_encoder_r - last_recv_encoder_r;
@@ -603,18 +650,44 @@ void CugoController::count2twist()
     vx_dt = (vl + vr) / 2;
     theta_dt = (vr - vl) / tread;
 
-    odom_twist_x = vx_dt / diff_time;
-    odom_twist_yaw = theta_dt / diff_time;
+    float translation_acc = vx_dt / diff_time;
+    float angular_acc = theta_dt / diff_time;
 
-    // 故障代替値の更新
-    alt_odom_twist_x = odom_twist_x;
-    alt_odom_twist_yaw = odom_twist_yaw;
+    // 加速度上限を超えていないか確認
+    if (fabs(translation_acc) > fabs(abnormal_translation_acc_limit))
+    {
+      abnormal_acc_limit_over_flag = true;
+      ROS_ERROR("over abnormal_translation_acc_limit, did not update odometry");
+    }
+    else if (fabs(angular_acc) > fabs(abnormal_angular_acc_limit))
+    {
+      abnormal_acc_limit_over_flag = true;
+      ROS_ERROR("over abnormal_angular_acc_limit, did not update odometry");
+    }
+    else
+    {
+      odom_twist_x = translation_acc;
+      odom_twist_yaw = angular_acc;
+
+      // 故障代替値の更新
+      alt_odom_twist_x = odom_twist_x;
+      alt_odom_twist_yaw = odom_twist_yaw;
+
+      abnormal_acc_limit_over_flag = false;
+    }
 
     diff_err_count = 0;
   }
-  else
+  // 異常時のフロー1: diff_timeが0.0秒以下の場合、同一時刻のパケット受信の可能性がありゼロ除算が生じる可能性があるため、異常と判断し処理を行わない
+  else if (diff_time <= 0.0)
   {
     // std::cout << "diff_time == 0.0" << std::endl;
+    ROS_ERROR("recv diff_time is 0.0 seconds or less. ");
+  }
+  // 異常時のフロー2: diff_timeが1.0秒以上の場合、通信途絶などの恐れがあり信頼できないため、異常と判断し処理を行わない
+  else
+  {
+    ROS_ERROR("recv diff_time is 1.0 seconds or over. Communication may be lost.");
   }
 }
 
@@ -684,7 +757,7 @@ void CugoController::check_stop_cmd_vel()
   float subscribe_duration = (ros::Time::now() - subscribe_time).toSec();
   if (subscribe_duration > ((float)stop_motor_time / 1000))
   {
-    ROS_WARN("/cmd_vel disconnect...\nset target rpm 0.0");
+    ROS_WARN("/cmd_vel disconnect...\nset target rpm 0.0[m/s], 0.0[rad/s]");
     vector_v = 0.0;
     vector_omega = 0.0;
   }
@@ -745,12 +818,68 @@ void CugoController::recv_count_MCU()
       alt_recv_encoder_l = recv_encoder_l;
       alt_recv_encoder_r = recv_encoder_r;
 
-      if (!first_recv_flag)
-      {
-        first_recv_flag = true;
-        last_recv_encoder_l = recv_encoder_l;
-        last_recv_encoder_r = recv_encoder_r;
-      }
+      view_read_data();
+    }
+  }
+}
+
+void CugoController::send_initial_cmd_MCU()
+{
+  UDP_send_initial_cmd();
+}
+
+void CugoController::recv_base_count_MCU()
+{
+  unsigned char buf[UDP_HEADER_SIZE + UDP_BUFF_SIZE];
+  // バッファの初期化
+  memset(buf, 0x00, sizeof(buf));
+
+  // 受信
+  int recv_len = recv(sock, buf, sizeof(buf), 0);
+  // std::cout << "recv_len: " << recv_len << std::endl;
+  // 受信バッファがない場合
+  if (recv_len <= 0)
+  {
+    view_recv_error();
+  }
+  // 受信バッファがある場合
+  else
+  {
+    view_recv_packet(buf, recv_len);
+
+    // エラーカウントのリセット
+    recv_err_count = 0;
+
+    uint16_t recv_checksum = read_uint16_t_from_header(buf, RECV_HEADER_CHECKSUM_PTR);
+    uint16_t calc_checksum = calculate_checksum(buf, recv_len, UDP_HEADER_SIZE);
+    // 異常時のフロー
+    if (recv_checksum != calc_checksum)
+    {
+      ROS_ERROR("Packet integrity check failed");
+    }
+    // 正常時のフロー
+    else
+    {
+      // エラーカウントのリセット
+      checksum_err_count = 0;
+
+      // ベクトル計算用の時間を計測
+      last_recv_time = recv_time;
+      recv_time = ros::Time::now();
+      // UDPの一往復の時間を測定
+      //std::cout << "UDP time:" << (recv_time - UDP_send_time) << std::endl;
+
+      // エンコーダ値の読み出し
+      recv_encoder_l = read_float_from_buf(buf, RECV_ENCODER_L_PTR);
+      recv_encoder_r = read_float_from_buf(buf, RECV_ENCODER_R_PTR);
+
+      // 故障代替値の更新
+      alt_recv_encoder_l = recv_encoder_l;
+      alt_recv_encoder_r = recv_encoder_r;
+
+      last_recv_encoder_l = recv_encoder_l;
+      last_recv_encoder_r = recv_encoder_r;
+      encoder_first_recv_flag = true;
 
       view_read_data();
     }
@@ -760,7 +889,10 @@ void CugoController::recv_count_MCU()
 void CugoController::odom_publish()
 {
   //std::cout << "\nodom_publish" << std::endl;;
-  calc_odom();
+  if (!abnormal_acc_limit_over_flag)
+  {
+    calc_odom();
+  }
   publish();
 }
 
@@ -779,12 +911,12 @@ int main(int argc, char **argv)
 
   ros::Rate loop_rate(10);
   CugoController node(nh);
+  node.init_time();
 
   try
   {
-    node.init_time();
     node.init_UDP();
-    node.reset_last_encoder();
+    node.recv_base_encoder_count();
 
     while (ros::ok())
     {
