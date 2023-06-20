@@ -28,9 +28,9 @@ ROS2環境がない場合は[ROS2 Documentation](https://docs.ros.org/en/foxy/In
 ROS2のワークスペース内でgit cloneしたのち、colcon buildしてください。
 ~~~
 $ cd ~/your/ros_workspace/ros2_ws/src
-$ git clone https://github.com/CuboRex-Development/cugo-ros-controller.git
+$ git clone https://github.com/CuboRex-Development/cugo-ros-control.git
 $ cd ../..
-$ colcon build
+$ colcon build --symlink-install
 $ source ~/your/ros_workspace/ros2_ws/install/local_setup.bash
 ~~~
 
@@ -52,10 +52,10 @@ $ ros2 run cugo_ros2_control cugo_ros2_control
 # Topics and Parameters
 ## Published Topics
 - /odom ([nav_msgs/msg/Odometry](https://docs.ros2.org/foxy/api/nav_msgs/msg/Odometry.html))
-- /tf ([tf2_msgs/msg/TFMessage](https://docs.ros2.org/latest/api/tf2_msgs/msg/TFMessage.html))
+- /tf ([tf2_msgs/msg/TFMessage](https://docs.ros2.org/foxy/api/tf2_msgs/msg/TFMessage.html))
 
 ## Subscribed Topics
-- /cmd_vel ([geometry_msgs/msg/Twist](http://docs.ros.org/en/melodic/api/geometry_msgs/html/msg/Twist.html))
+- /cmd_vel ([geometry_msgs/msg/Twist](https://docs.ros2.org/foxy/api/geometry_msgs/msg/Twist.html))
 
 ## Parameters
 - ~ODOMETRY_DISPLAY (boolean, default: True)
@@ -70,6 +70,12 @@ $ ros2 run cugo_ros2_control cugo_ros2_control
   - 受信パケットの表示切替フラグ
 - ~READ_DATA_DISPLAY (boolean, default: True)
   - 受信パケットから抽出したデータの表示切替フラグ
+- ~abnormal_angular_acc_limit (float, default: 100.0*math.pi)
+  - マイコンリセット等によって生じる異常な移動を検知するための角加速度上限値
+  - デフォルト値は0.1秒間にπ[rad]回転する場合の角加速度100.0*π[rad/s^2]
+- ~abnormal_translation_acc_limit (float, default: 10.0)
+  - マイコンリセット等によって生じる異常な移動を検知するための並進加速度上限値
+  - デフォルト値は0.1秒間に1m移動する場合の並進加速度10[m/s^2]
 - ~arduino_addr (string, default: 192.168.11.216)
   - Arduinoドライバの通信受付IPアドレス
 - ~arduino_port (int, default: 8888)
@@ -90,8 +96,6 @@ $ ros2 run cugo_ros2_control cugo_ros2_control
   - 通信タイムアウトまでの時間[sec]
 - ~tread (float, default: 0.380)
   - トレッド幅[m]
-- ~vx_dt_max (float, default: 3.3)
-  - 最大速度(速度上限)[km/h]
 - ~wheel_radius_l (float, default: 0.03858)
   - 左タイヤ半径[m]
 - ~wheel_radius_r (float, default: 0.03858)
