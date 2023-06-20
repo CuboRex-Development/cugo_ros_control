@@ -28,7 +28,7 @@ ROS環境がない場合は[ROS Wiki](http://wiki.ros.org/ja/noetic/Installation
 ROSのワークスペース内でgit cloneしたのち、catkin buildしてください。
 ~~~
 $ cd ~/your/ros_workspace/catkin_ws/src
-$ git clone https://github.com/CuboRex-Development/cugo-ros-controller.git
+$ git clone https://github.com/CuboRex-Development/cugo-ros-control.git
 $ cd ../..
 $ catkin build
 $ source ~/your/ros_workspace/catkin_ws/devel/setup.bash
@@ -80,6 +80,12 @@ $ roslaunch cugo_ros_control teleop_twist_keyboard.launch
   - 受信パケットの表示切替フラグ
 - ~READ_DATA_DISPLAY (boolean, default: true)
   - 受信パケットから抽出したデータの表示切替フラグ
+- ~abnormal_angular_acc_limit (float, default: 100.0*math.pi)
+  - マイコンリセット等によって生じる異常な移動を検知するための角加速度上限値
+  - デフォルト値は0.1秒間にπ[rad]回転する場合の角加速度100.0*π[rad/s^2]
+- ~abnormal_translation_acc_limit (float, default: 10.0)
+  - マイコンリセット等によって生じる異常な移動を検知するための並進加速度上限値
+  - デフォルト値は0.1秒間に1m移動する場合の並進加速度10[m/s^2]
 - ~arduino_addr (string, default: 192.168.11.216)
   - Arduinoドライバの通信受付IPアドレス
 - ~arduino_port (int, default: 8888)
