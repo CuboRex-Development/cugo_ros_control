@@ -44,6 +44,8 @@ using std::placeholders::_1;
 class CugoController : public rclcpp::Node
 {
   public:
+    rclcpp::WallRate loop_rate;
+
     // ros2実装したもの
     CugoController();
     ~CugoController();

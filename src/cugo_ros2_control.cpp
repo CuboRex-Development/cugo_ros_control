@@ -1,7 +1,7 @@
 #include "cugo_ros2_control/cugo_ros2_control.hpp"
 
 CugoController::CugoController()
-: Node("cugo_ros2_control")
+: Node("cugo_ros2_control"), loop_rate(10)
 {
   cmd_vel_sub_ = this->create_subscription<geometry_msgs::msg::Twist>(
       "/cmd_vel", 10, std::bind(&CugoController::cmd_vel_callback, this, _1));
@@ -411,7 +411,6 @@ void CugoController::init_UDP()
 
 void CugoController::recv_base_encoder_count()
 {
-  rclcpp::WallRate loop_rate(10); // 10Hz
   while (rclcpp::ok() && !encoder_first_recv_flag)
   {
     std::cout << "RECEIVING BASE ENCODER COUNT..." << std::endl;
@@ -916,7 +915,6 @@ int main(int argc, char * argv[])
   std::shared_ptr<CugoController> node = std::make_shared<CugoController>();
   //std::cout << "cugo_ros2_control start!" << std::endl;
 
-  rclcpp::WallRate loop_rate(10); // 10Hz
   node->init_time();
 
   try
@@ -934,7 +932,7 @@ int main(int argc, char * argv[])
       node->count2twist();
       node->odom_publish();
       rclcpp::spin_some(node);
-      loop_rate.sleep();
+      node->loop_rate.sleep();
     }
     rclcpp::shutdown();
   }
