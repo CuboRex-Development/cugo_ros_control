@@ -1,6 +1,6 @@
 #include "cugo_ros_control/cugo_ros_control.hpp"
 
-CugoController::CugoController(ros::NodeHandle nh)
+CugoController::CugoController(ros::NodeHandle nh) : loop_rate(10)
 {
   odom_pub = nh.advertise<nav_msgs::Odometry>("odom", 10);
   cmd_vel_sub = nh.subscribe("/cmd_vel", 10, &CugoController::cmd_vel_callback, this);
@@ -606,7 +606,6 @@ void CugoController::init_UDP()
 
 void CugoController::recv_base_encoder_count()
 {
-  ros::Rate loop_rate(10); // 10Hz
   while (ros::ok() && !encoder_first_recv_flag)
   {
     std::cout << "RECEIVING BASE ENCODER COUNT..." << std::endl;
@@ -909,7 +908,6 @@ int main(int argc, char **argv)
   ros::NodeHandle nh("~");
   //std::cout << "cugo_ros_control start!" << std::endl;
 
-  ros::Rate loop_rate(10);
   CugoController node(nh);
   node.init_time();
 
@@ -928,7 +926,7 @@ int main(int argc, char **argv)
       node.count2twist();
       node.odom_publish();
       ros::spinOnce();
-      loop_rate.sleep();
+      node.loop_rate.sleep();
     }
 
     node.node_shutdown();

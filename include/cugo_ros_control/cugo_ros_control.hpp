@@ -144,6 +144,8 @@ class CugoController {
     void check_communication();
 
   public:
+    ros::Rate loop_rate;
+
     CugoController(ros::NodeHandle);
     ~CugoController();
 
