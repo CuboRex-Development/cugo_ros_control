@@ -462,7 +462,7 @@ void CugoController::count2twist()
     else if(fabs(angular_acc) > fabs(abnormal_angular_acc_limit))
     {
       abnormal_acc_limit_over_flag = true;
-      RCLCPP_ERROR(this->get_logger(), "over abnormal_theta_dt_max, did not update odometry");
+      RCLCPP_ERROR(this->get_logger(), "over abnormal_angular_acc_limit, did not update odometry");
     }
     else
     {
