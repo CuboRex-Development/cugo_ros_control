@@ -430,7 +430,8 @@ void CugoController::count2twist()
 {
   float diff_time = (recv_time - last_recv_time).seconds();
   //std::cout << "diff_time: " << diff_time << std::endl;
-  if (diff_time != 0.0)
+  // 正常時のフロー
+  if (diff_time > 0.0 && diff_time < 1.0)
   {
     int count_diff_l = recv_encoder_l - last_recv_encoder_l;
     int count_diff_r = recv_encoder_r - last_recv_encoder_r;
@@ -475,9 +476,16 @@ void CugoController::count2twist()
 
     diff_err_count = 0;
   }
-  else
+  // 異常時のフロー1: diff_timeが0.0秒以下の場合、同一時刻のパケット受信の可能性がありゼロ除算が生じる可能性があるため、異常と判断し処理を行わない
+  else if (diff_time <= 0.0)
   {
     //std::cout << "diff_time == 0.0" << std::endl;
+    RCLCPP_ERROR(this->get_logger(), "recv diff_time is 0.0 seconds or less. ");
+  }
+  // 異常時のフロー2: diff_timeが1.0秒以上の場合、通信途絶などの恐れがあり信頼できないため、異常と判断し処理を行わない
+  else
+  {
+    RCLCPP_ERROR(this->get_logger(), "recv diff_time is 1.0 seconds or over. Communication may be lost.");
   }
 }
 
