@@ -20,7 +20,7 @@
         <param name="odom_frame_id" value="odom" />
         <param name="odom_child_frame_id" value="base_footprint" />
         <param name="abnormal_translation_acc_limit" value="10.0" />
-        <param name="abnormal_angular_acc_limit" value="100.0*M_PI" />
+        <param name="abnormal_angular_acc_limit" value="7.85" />
 	<remap from="/cugo_ros_control/odom" to="/odom" />
     </node>
 </launch>

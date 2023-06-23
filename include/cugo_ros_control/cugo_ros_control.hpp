@@ -69,7 +69,7 @@ class CugoController {
     std::string odom_child_frame_id;
 
     float abnormal_translation_acc_limit = 10.0;
-    float abnormal_angular_acc_limit = 100.0 * M_PI;
+    float abnormal_angular_acc_limit = 10.0 * M_PI / 4;
 
     int stop_motor_time = 500; //NavigationやコントローラからSubscriberできなかったときにモータを>止めるまでの時間(ms)
 

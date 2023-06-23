@@ -30,7 +30,7 @@ CugoController::CugoController(ros::NodeHandle nh) : loop_rate(10)
   nh.param("odom_child_frame_id", odom_child_frame_id, std::string("base_link"));
 
   nh.param("abnormal_translation_acc_limit", abnormal_translation_acc_limit, (float)10.0);
-  nh.param("abnormal_angular_acc_limit", abnormal_angular_acc_limit, (float)(100.0*M_PI));
+  nh.param("abnormal_angular_acc_limit", abnormal_angular_acc_limit, (float)(10.0*M_PI/4));
 
   view_parameters();
   //view_init();

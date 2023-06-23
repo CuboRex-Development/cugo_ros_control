@@ -82,7 +82,7 @@ $ roslaunch cugo_ros_control teleop_twist_keyboard.launch
   - 受信パケットから抽出したデータの表示切替フラグ
 - ~abnormal_angular_acc_limit (float, default: 100.0*math.pi)
   - マイコンリセット等によって生じる異常な移動を検知するための角加速度上限値
-  - デフォルト値は0.1秒間にπ[rad]回転する場合の角加速度100.0*π[rad/s^2]
+  - デフォルト値は0.1秒間にπ/6[rad]回転する場合の角加速度10.0 * π / 4 (= 7.85) [rad/s^2]
 - ~abnormal_translation_acc_limit (float, default: 10.0)
   - マイコンリセット等によって生じる異常な移動を検知するための並進加速度上限値
   - デフォルト値は0.1秒間に1m移動する場合の並進加速度10[m/s^2]
@@ -136,7 +136,7 @@ RECV_ENCODER_R | float      | `4`             | 4                           | �
 
 # Note
 
-クローラ走行の振動が非常に大きいので、RJ45端子のEthernetケーブルでの通信 / WiFi接続による通信をお勧めします。　　
+クローラ走行の振動が非常に大きいので、RJ45端子のEthernetケーブルでの通信 / WiFi接続による通信をお勧めします。
 シリアル通信ものちに対応予定です。
 
 
