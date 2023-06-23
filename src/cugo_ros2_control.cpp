@@ -603,9 +603,9 @@ void CugoController::init_UDP()
   bind_status = bind(sock, (const struct sockaddr *)&local_addr, sizeof(local_addr));
   if (bind_status < 0)
   {
-    perror("bind failed");
-    RCLCPP_ERROR(this->get_logger(), "bind failed");
-    throw std::logic_error("an exception occured: bind failed");
+    perror("bind failed, source_port may be used by other process");
+    RCLCPP_ERROR(this->get_logger(), "bind failed, source_port may be used by other process");
+    throw std::logic_error("an exception occured: bind failed, source_port may be used by other process");
     return;
   }
 
