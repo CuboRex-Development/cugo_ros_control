@@ -215,6 +215,7 @@ void CugoController::UDP_send_initial_cmd()
   // バッファの初期化
   memset(body, 0x00, sizeof(body));
 
+  // TODO 内部状態の初期パラメータを与える。現状はUDP_send_cmdと同等になっている。
   // バッファへのbodyデータの書き込み
   write_float_to_buf(body, TARGET_RPM_L_PTR, target_rpm_l);
   write_float_to_buf(body, TARGET_RPM_R_PTR, target_rpm_r);
@@ -548,7 +549,7 @@ void CugoController::view_read_data()
   }
 }
 
-// TODO
+// TODO UDP通信とシリアル通信を使い分けられるようにしたい
 //void CugoController::init_serial()
 //{
 //}
@@ -652,7 +653,7 @@ void CugoController::count2twist()
     float translation_acc = vx_dt / diff_time;
     float angular_acc = theta_dt / diff_time;
 
-    // 加速度上限を超えていないか確認
+    // マイコンのリセットや状態遷移などで、エンコーダのカウントが連続していない時に、存在しないはずの移動を検知し、オドメトリに反映されないようにする
     if (fabs(translation_acc) > fabs(abnormal_translation_acc_limit))
     {
       abnormal_acc_limit_over_flag = true;
@@ -677,13 +678,13 @@ void CugoController::count2twist()
 
     diff_err_count = 0;
   }
-  // 異常時のフロー1: diff_timeが0.0秒以下の場合、同一時刻のパケット受信の可能性がありゼロ除算が生じる可能性があるため、異常と判断し処理を行わない
+  // 異常時のフロー1: diff_timeが0.0秒以下の場合、同一時刻のパケット受信の可能性がありゼロ除算が生じる可能性があるため、異常と判断しオドメトリの更新を行わない
   else if (diff_time <= 0.0)
   {
     // std::cout << "diff_time == 0.0" << std::endl;
     ROS_ERROR("recv diff_time is 0.0 seconds or less. ");
   }
-  // 異常時のフロー2: diff_timeが1.0秒以上の場合、通信途絶などの恐れがあり信頼できないため、異常と判断し処理を行わない
+  // 異常時のフロー2: diff_timeが1.0秒以上の場合、通信途絶などの恐れがあり信頼できないため、異常と判断しオドメトリの更新を行わない
   else
   {
     ROS_ERROR("recv diff_time is 1.0 seconds or over. Communication may be lost.");
@@ -756,14 +757,15 @@ void CugoController::check_stop_cmd_vel()
   float subscribe_duration = (ros::Time::now() - subscribe_time).toSec();
   if (subscribe_duration > ((float)stop_motor_time / 1000))
   {
-    ROS_WARN("/cmd_vel disconnect...\nset target rpm 0.0[m/s], 0.0[rad/s]");
     vector_v = 0.0;
     vector_omega = 0.0;
+    ROS_WARN("/cmd_vel disconnect...\nset target velocity 0.0[m/s], 0.0[rad/s]");
   }
 }
 
 void CugoController::send_rpm_MCU()
 {
+  // TODO 将来的にUDP通信とシリアル通信を選択可能とした時に、serial_send_cmdをここで呼ぶ
   UDP_send_cmd(); // binary
   //UDP_send_string_cmd(); // string
 }
@@ -824,6 +826,7 @@ void CugoController::recv_count_MCU()
 
 void CugoController::send_initial_cmd_MCU()
 {
+  // TODO 将来的にUDP通信とシリアル通信を選択可能とした時に、serial_send_initial_cmdをここで呼ぶ
   UDP_send_initial_cmd();
 }
 
@@ -876,6 +879,10 @@ void CugoController::recv_base_count_MCU()
       alt_recv_encoder_l = recv_encoder_l;
       alt_recv_encoder_r = recv_encoder_r;
 
+      // mainループで使っている受信関数(recv_count_MCU)と異なる部分
+      // ノード起動時のlast_recv_encoder_l/rの初期値は0となっており、
+      // マイコンから受信するエンコーダ値が大きい場合、オドメトリのTwistが吹っ飛ぶ可能性がある。
+      // これを防ぐために、ここで受信したエンコーダ値を基準値として変数を更新している。
       last_recv_encoder_l = recv_encoder_l;
       last_recv_encoder_r = recv_encoder_r;
       encoder_first_recv_flag = true;
@@ -931,18 +938,15 @@ int main(int argc, char **argv)
 
     node.node_shutdown();
   }
-
   catch (const ros::Exception &e)
   {
     ROS_ERROR("ros::Exception error occured: %s ", e.what());
     node.node_shutdown();
   }
-
   catch (const std::exception &e)
   {
     ROS_ERROR("std::exception error occured: %s ", e.what());
     node.node_shutdown();
   }
-
   return 0;
 }
