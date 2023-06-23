@@ -52,7 +52,7 @@ CugoController::CugoController()
 
   this->declare_parameter("abnormal_translation_acc_limit", (float)10.0);
   abnormal_translation_acc_limit = this->get_parameter("abnormal_translation_acc_limit").as_double();
-  this->declare_parameter("abnormal_angular_acc_limit", (float)100.0*M_PI);
+  this->declare_parameter("abnormal_angular_acc_limit", (float)10.0*M_PI/4);
   abnormal_angular_acc_limit = this->get_parameter("abnormal_angular_acc_limit").as_double();
 
   view_parameters();

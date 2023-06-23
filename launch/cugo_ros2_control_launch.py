@@ -30,7 +30,7 @@ def generate_launch_description():
                 {'odom_frame_id': 'odom'},
                 {'odom_child_frame_id': 'base_link'},
                 {'abnormal_translation_acc_limit': 10.0}, # [m/s^2], default 1.0[m] translation for dt(0.1[s])
-                {'abnormal_angular_acc_limit': 100.0*math.pi} # [rad/s^2], default pi/2[rad] rotation for dt(0.1[s])
+                {'abnormal_angular_acc_limit': 10.0*math.pi/4} # [rad/s^2], default pi/6[rad] rotation for dt(0.1[s])
             ]
         ),
     ])
