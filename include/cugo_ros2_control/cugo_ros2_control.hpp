@@ -1,6 +1,17 @@
 #ifndef CUGO_CONTROLLER_H
 #define CUGO_CONTROLLER_H
 
+// ros2
+#include "rclcpp/rclcpp.hpp"
+#include "std_msgs/msg/string.hpp"
+#include "geometry_msgs/msg/twist.hpp"
+#include "nav_msgs/msg/odometry.hpp"
+#include "geometry_msgs/msg/transform_stamped.hpp"
+#include "tf2/LinearMath/Quaternion.h"
+#include "tf2_ros/transform_broadcaster.h"
+#include "tf2_geometry_msgs/tf2_geometry_msgs.h"
+
+
 // cpp
 #include <cstdio>
 #include <cstring>
@@ -18,16 +29,6 @@
 #include <sys/ioctl.h>
 #include <arpa/inet.h>
 
-// ros2
-#include "rclcpp/rclcpp.hpp"
-#include "std_msgs/msg/string.hpp"
-#include "geometry_msgs/msg/twist.hpp"
-#include "nav_msgs/msg/odometry.hpp"
-#include "geometry_msgs/msg/transform_stamped.hpp"
-#include "tf2/LinearMath/Quaternion.h"
-#include "tf2_ros/transform_broadcaster.h"
-#include "tf2_geometry_msgs/tf2_geometry_msgs.h"
-
 #define UDP_BUFF_SIZE 64
 #define UDP_HEADER_SIZE 8
 
@@ -43,43 +44,6 @@ using std::placeholders::_1;
 
 class CugoController : public rclcpp::Node
 {
-  public:
-    rclcpp::WallRate loop_rate;
-
-    // ros2実装したもの
-    CugoController();
-    ~CugoController();
-    void odom_publish();
-
-    // 移植してくるもの
-    void view_odom();
-    void view_init();
-    void view_parameters();
-    void view_send_error();
-    void view_recv_error();
-    void view_recv_packet(unsigned char*, int);
-    void view_sent_packet(unsigned char*, int);
-    void view_target_rpm();
-    void view_read_data();
-
-    void init_time();
-    void init_UDP();
-    void close_UDP();
-
-    // TODO 修正が必要なもの
-    void count2twist();
-    void twist2rpm();
-    void check_failsafe();
-    void check_stop_cmd_vel();
-    void send_rpm_MCU();
-    void recv_count_MCU();
-    void node_shutdown();
-
-    void UDP_send_initial_cmd();
-    void send_initial_cmd_MCU();
-    void recv_base_count_MCU();
-    void recv_base_encoder_count();
-
   private:
     struct UdpHeader
     {
@@ -113,7 +77,7 @@ class CugoController : public rclcpp::Node
     std::string odom_child_frame_id;
 
     float abnormal_translation_acc_limit = 10.0;
-    float abnormal_angular_acc_limit = 100.0*M_PI;
+    float abnormal_angular_acc_limit = 100.0 * M_PI;
 
     int stop_motor_time = 500; //NavigationやコントローラからSubscriberできなかったときにモータを>止めるまでの時間(ms)
 
@@ -158,22 +122,16 @@ class CugoController : public rclcpp::Node
     struct sockaddr_in local_addr; // 受信用
     struct sockaddr_in remote_addr; // 送信用
 
-    // TODO 時間系
     rclcpp::Time subscribe_time;
     rclcpp::Time recv_time;
     rclcpp::Time last_recv_time;
     rclcpp::Time UDP_send_time;
 
-    // ros2実装したもの
-    rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
     rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_sub_;
+    rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
     std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
 
-    // ros2実装したもの
     void cmd_vel_callback(const geometry_msgs::msg::Twist::SharedPtr msg);
-    void publish();
-
-    // 移植してくるもの
     uint16_t calculate_checksum(const void*, size_t, size_t);
     float check_overflow(float, float);
     void calc_odom();
@@ -186,9 +144,41 @@ class CugoController : public rclcpp::Node
     bool read_bool_from_buf(unsigned char*, const int);
     uint16_t read_uint16_t_from_header(unsigned char*, const int);
     void UDP_send_cmd();
+    void publish();
     void check_communication();
 
+  public:
+    rclcpp::WallRate loop_rate;
 
+    CugoController();
+    ~CugoController();
+
+    void view_odom();
+    void view_init();
+    void view_parameters();
+    void view_send_error();
+    void view_recv_error();
+    void view_recv_packet(unsigned char*, int);
+    void view_sent_packet(unsigned char*, int);
+    void view_target_rpm();
+    void view_read_data();
+
+    void init_time();
+    void init_UDP();
+    void close_UDP();
+    void count2twist();
+    void twist2rpm();
+    void check_failsafe();
+    void check_stop_cmd_vel();
+    void send_rpm_MCU();
+    void recv_count_MCU();
+    void odom_publish();
+    void node_shutdown();
+
+    void UDP_send_initial_cmd();
+    void send_initial_cmd_MCU();
+    void recv_base_count_MCU();
+    void recv_base_encoder_count();
 };
 
 #endif
