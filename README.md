@@ -1,4 +1,4 @@
-# cugo_ros_controller
+# cugo_ros_control
 ![_DSC0521](https://user-images.githubusercontent.com/22425319/234768864-03dacbd2-171a-4932-8552-271770513bb8.JPG)
 
 CuGoをROSで制御する際、ROS開発キットに付属するArduinoに対して制御指令を送り、エンコーダの読み取り結果を受け取るノードです。ROSTopicの/cmd_velをSubscribeし、/odomをPublishします。セットでArduinoドライバと同時に使用します。
