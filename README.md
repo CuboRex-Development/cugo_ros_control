@@ -1,8 +1,9 @@
-# cugo-ros-controller
+# cugo_ros_control
+![_DSC0521](https://user-images.githubusercontent.com/22425319/234768864-03dacbd2-171a-4932-8552-271770513bb8.JPG)
 
 CuGoをROSで制御する際、ROS開発キットに付属するArduinoに対して制御指令を送り、エンコーダの読み取り結果を受け取るノードです。ROSTopicの/cmd_velをSubscribeし、/odomをPublishします。セットでArduinoドライバと同時に使用します。
 
-Arduinoドライバのリポジトリはこちら： https://github.com/CuboRex-Development/cugo-ros-arduinodriver.git
+Arduinoドライバのリポジトリはこちら： https://github.com/CuboRex-Development/cugo_ros_arduinodriver.git
 
 # Table of Contents
 - [Features](#features)
@@ -15,20 +16,20 @@ Arduinoドライバのリポジトリはこちら： https://github.com/CuboRex-
 - [License](#license)
 
 # Features
-CuGo-ROS-ArduinoDriverに対して、/cmd_velのベクトルを達成するためのロボットのL/Rの回転数を計算し指示を投げます。また、Arduinoからエンコーダのカウント数を受け取ることでロボットのオドメトリ座標を計算し、/odomを生成しPublishします。
+cugo_ros_arduinodriverに対して、/cmd_velのベクトルを達成するためのロボットのL/Rの回転数を計算し指示を投げます。また、Arduinoからエンコーダのカウント数を受け取ることでロボットのオドメトリ座標を計算し、/odomを生成しPublishします。
 Arduinoとの通信はUDP通信にて実現します。ロボット内のEdgeルータに対して、有線Ethernetケーブルまたは、WiFiに接続することでArduinoと通信することができます。Arduinoドライバで受付IPを指定し、そのIPに対してUDP信号を投げます。デフォルトでは、192.168.11.216に対して投げます。必要に応じて変更してください。
 
 # Requirement
 - OS: Ubuntu 20.04.4 LTS
-- ROS Distribution: ROS2 Foxy Fitzroy
+- ROS Distribution: ROS 2 Foxy Fitzroy
 
 # Installation
-ROS2環境がない場合は[ROS2 Documentation](https://docs.ros.org/en/foxy/Installation/Ubuntu-Install-Debians.html)を参照しROS2をインストールしてください。
+ROS 2環境がない場合は[ROS 2 Documentation](https://docs.ros.org/en/foxy/Installation/Ubuntu-Install-Debians.html)を参照しROS 2をインストールしてください。
 
-ROS2のワークスペース内でgit cloneしたのち、colcon buildしてください。
+ROS 2のワークスペース内でgit cloneしたのち、colcon buildしてください。
 ~~~
 $ cd ~/your/ros_workspace/ros2_ws/src
-$ git clone https://github.com/CuboRex-Development/cugo-ros-control.git
+$ git clone https://github.com/CuboRex-Development/cugo_ros_control.git
 $ cd ../..
 $ colcon build --symlink-install
 $ source ~/your/ros_workspace/ros2_ws/install/local_setup.bash
@@ -58,30 +59,33 @@ $ ros2 run cugo_ros2_control cugo_ros2_control
 - /cmd_vel ([geometry_msgs/msg/Twist](https://docs.ros2.org/foxy/api/geometry_msgs/msg/Twist.html))
 
 ## Parameters
-- ~ODOMETRY_DISPLAY (boolean, default: True)
-  - オドメトリの表示切替フラグ
-- ~PARAMETERS_DISPLAY (boolean, default: False)
-  - パラメータの表示切替フラグ
-- ~TARGET_RPM_DISPLAY (boolean, default: True)
-  - RPMの表示切替フラグ
-- ~SENT_PACKET_DISPLAY (boolean, default: False)
-  - 送信パケットの表示切替フラグ
-- ~RECV_PACKET_DISPLAY (boolean, default: True)
-  - 受信パケットの表示切替フラグ
-- ~READ_DATA_DISPLAY (boolean, default: True)
-  - 受信パケットから抽出したデータの表示切替フラグ
+- ~ODOMETRY_DISPLAY (boolean, default: true)
+  - オドメトリ表示の有無（trueで表示）
+- ~PARAMETERS_DISPLAY (boolean, default: false)
+  - 設定したパラメータを起動時に表示（trueで表示）
+- ~TARGET_RPM_DISPLAY (boolean, default: true)
+  - 目標RPM表示の有無（trueで表示）
+- ~SENT_PACKET_DISPLAY (boolean, default: false)
+  - 送信パケットのデバッグ表示の有無（trueで表示)
+- ~RECV_PACKET_DISPLAY (boolean, default: true)
+  - 受信パケットのデバッグ表示の有無（trueで表示）
+- ~READ_DATA_DISPLAY (boolean, default: true)
+  - 受信パケットからデコードした数値の表示の有無（trueで表示）
 - ~abnormal_angular_acc_limit (float, default: 100.0*math.pi)
-  - マイコンリセット等によって生じる異常な移動を検知するための角加速度上限値
-  - デフォルト値は0.1秒間にπ/6[rad]回転する場合の角加速度10.0 * π / 4[rad/s^2]
+  - マイコンリセット等によって生じる不正な移動を検知するための角加速度上限値
+  - デフォルト値は0.1秒間にπ/6[rad]回転する場合の角加速度10.0 * π / 4 (= 7.85) [rad/s^2]
+  - 不正と判定した場合はオドメトリに加算しない
 - ~abnormal_translation_acc_limit (float, default: 10.0)
-  - マイコンリセット等によって生じる異常な移動を検知するための並進加速度上限値
+  - マイコンリセット等によって生じる不正な移動を検知するための並進加速度上限値
   - デフォルト値は0.1秒間に1m移動する場合の並進加速度10[m/s^2]
+  - 不正と判定した場合はオドメトリに加算しない
 - ~arduino_addr (string, default: 192.168.11.216)
   - Arduinoドライバの通信受付IPアドレス
 - ~arduino_port (int, default: 8888)
   - Arduinoドライバの通信受付ポート番号
 - ~encoder_max (int, default: 2147483647)
   - エンコーダ最大カウント
+  - マイコン側のカウンタがオーバーフローする値を設定
 - ~encoder_resolution (int, default: 2048)
   - エンコーダ分解能
 - ~odom_child_frame_id (string, default: base_link)
