@@ -1,0 +1,48 @@
+scan_filter_chain:
+- name: robot_body_outline
+  type: laser_filters/LaserScanBoxFilter
+  params:
+    box_frame: laser
+    max_x: 0.26
+    max_y: 0.33
+    max_z: 0.35
+    min_x: -0.26
+    min_y: -0.33
+    min_z: -0.25
+    invert: false # activate to remove all points outside of the box
+- name: al_frame_front_right
+  type: laser_filters/LaserScanSectorFilter
+  params:
+    angle_max: 2.36                     # if not specified defaults to 0.0
+    angle_min: 2.10                     # if not specified defaults to 0.0
+    # range_min: 0.2                      # if not specified defaults to 0.0
+    # range_max: 2.0                      # if not specified defaults to 100000.0
+    # clear_inside: true                  # if not specified defaults to true
+    # invert: true                        # (!clear_inside) if not specified defaults to false
+- name: al_frame_rear_right
+  type: laser_filters/LaserScanSectorFilter
+  params:
+    angle_max: 1.06                    # if not specified defaults to 0.0
+    angle_min: 0.84                    # if not specified defaults to 0.0
+    # range_min: 0.2                      # if not specified defaults to 0.0
+    # range_max: 2.0                      # if not specified defaults to 100000.0
+    # clear_inside: true                  # if not specified defaults to true
+    # invert: true                        # (!clear_inside) if not specified defaults to false
+- name: al_frame_rear_left
+  type: laser_filters/LaserScanSectorFilter
+  params:
+    angle_min: -1.06                    # if not specified defaults to 0.0
+    angle_max: -0.84                    # if not specified defaults to 0.0
+    # range_min: 0.2                      # if not specified defaults to 0.0
+    # range_max: 2.0                      # if not specified defaults to 100000.0
+    # clear_inside: true                  # if not specified defaults to true
+    # invert: true                        # (!clear_inside) if not specified defaults to false
+- name: al_frame_front_left
+  type: laser_filters/LaserScanSectorFilter
+  params:
+    angle_min: -2.36                    # if not specified defaults to 0.0
+    angle_max: -2.10                   # if not specified defaults to 0.0
+    # range_min: 0.2                      # if not specified defaults to 0.0
+    # range_max: 2.0                      # if not specified defaults to 100000.0
+    # clear_inside: true                  # if not specified defaults to true
+    # invert: true                        # (!clear_inside) if not specified defaults to false
