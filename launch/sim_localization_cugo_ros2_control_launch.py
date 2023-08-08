@@ -63,7 +63,7 @@ def generate_launch_description():
         # Node(
         #     package = 'tf2_ros', 
         #     executable = 'static_transform_publisher',
-        #     arguments = ['0','0','0.16','0','0','3.14',BASE_LINK,'laser']
+        #     arguments = ['0','0','0.16','3.14','0','0',BASE_LINK,'laser']
         # ),
         
         Node(
@@ -131,6 +131,20 @@ def generate_launch_description():
                 ('odometry/filtered', 'wheel/odometry')
             ]
         ),
+
+        # Node(
+        #     package='robot_localization', 
+        #     executable='ekf_node', 
+        #     name='ekf_filter_node_map',
+	    #     output='screen',
+        #     parameters=[
+        #         robot_localization_file_path, 
+        #         {'use_sim_time': use_sim_time}
+        #     ],
+        #     remappings=[
+        #         ('odometry/filtered', 'odometry/global')
+        #     ]
+        # ),           
         
     ]
     
