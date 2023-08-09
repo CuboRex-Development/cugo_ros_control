@@ -63,6 +63,12 @@ def generate_launch_description():
             arguments=["0", "0", "0", "0", "0", "0", "map", "wgs84"]
         ),
 
+        Node(
+            package = 'tf2_ros', 
+            executable = 'static_transform_publisher',
+            arguments = ['0','0','0','0','0','0','map','odom']
+        ),
+
         # cugo 
         Node(
             package='cugo_ros2_control',
@@ -87,7 +93,7 @@ def generate_launch_description():
                 {'arduino_addr': '192.168.11.216'},
                 {'arduino_port': 8888},
                 {'source_port': 8888},
-                {'odom_frame_id': 'utm'},
+                {'odom_frame_id': 'odom'},
                 {'odom_child_frame_id': BASE_FOOTPRINT},
                 {'abnormal_translation_acc_limit': 10.0}, # [m/s^2], default 1.0[m] translation for dt(0.1[s])
                 {'abnormal_angular_acc_limit': 10.0*math.pi/4} # [rad/s^2], default pi/6[rad] rotation for dt(0.1[s])
@@ -125,20 +131,20 @@ def generate_launch_description():
         ),
         
         # TF : map to odom
-        Node(
-            package='robot_localization',
-            executable='ekf_node',
-            name='ekf_filter_node_map',
-            output='screen',
-            parameters=[
-                robot_localization_file_path,   
-                {'use_sim_time': use_sim_time}
-            ],      
-            remappings=[
-                ('odometry/filtered', 'odometry/global'),
-                ('/set_pose', '/initialpose')
-            ]
-        ),
+        # Node(
+        #     package='robot_localization',
+        #     executable='ekf_node',
+        #     name='ekf_filter_node_map',
+        #     output='screen',
+        #     parameters=[
+        #         robot_localization_file_path,   
+        #         {'use_sim_time': use_sim_time}
+        #     ],      
+        #     remappings=[
+        #         ('odometry/filtered', 'odometry/global'),
+        #         ('/set_pose', '/initialpose')
+        #     ]
+        # ),
         
     ]
     

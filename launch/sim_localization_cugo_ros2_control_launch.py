@@ -37,40 +37,45 @@ def generate_launch_description():
     Nodes = [
         # static tf
         # temp
-        # static tf
-        # temp
-        # Node(
-        #     package = 'tf2_ros', 
-        #     executable = 'static_transform_publisher',
-        #     name = 'base_footprint_to_base_link',
-        #     arguments = ['0','0','0.13','0','0','0',BASE_FOOTPRINT, BASE_LINK]
-        # ),
-        
-        # Node(
-        #     package = 'tf2_ros', 
-        #     executable = 'static_transform_publisher',
-        #     name = 'gps_pos',
-        #     arguments = ['0.29','0.20','0.80','0','0','0',BASE_LINK,'gps']
-        # ),
-
-        # Node(
-        #     package = 'tf2_ros', 
-        #     executable = 'static_transform_publisher',
-        #     name = 'imu_pos',
-        #     arguments = ['0','0','0.09','0','0','0',BASE_LINK,'imu']
-        # ),
-
-        # Node(
-        #     package = 'tf2_ros', 
-        #     executable = 'static_transform_publisher',
-        #     arguments = ['0','0','0.16','3.14','0','0',BASE_LINK,'laser']
-        # ),
+        Node(
+            package = 'tf2_ros', 
+            executable = 'static_transform_publisher',
+            name = 'base_footprint_to_base_link',
+            arguments = ['0','0','0.13','0','0','0',BASE_FOOTPRINT, BASE_LINK]
+        ),
         
         Node(
             package = 'tf2_ros', 
             executable = 'static_transform_publisher',
-            arguments = ['0','0','0','0','0','0','map','map_identity']
+            name = 'gps_pos',
+            arguments = ['0.29','0.20','0.80','0','0','0',BASE_LINK,'gps']
         ),
+
+        Node(
+            package = 'tf2_ros', 
+            executable = 'static_transform_publisher',
+            name = 'imu_pos',
+            arguments = ['0','0','0.09','0','0','0',BASE_LINK,'imu']
+        ),
+
+        Node(
+            package = 'tf2_ros', 
+            executable = 'static_transform_publisher',
+            arguments = ['0','0','0.16','3.14','0','0',BASE_LINK,'laser']
+        ),
+        
+        # Node(
+        #     package = 'tf2_ros', 
+        #     executable = 'static_transform_publisher',
+        #     arguments = ['0','0','0','0','0','0','map','map_identity']
+        # ),
+
+        Node(
+            package = 'tf2_ros', 
+            executable = 'static_transform_publisher',
+            arguments = ['0','0','0','0','0','0','map','odom']
+        ),
+
         # cugo 
         # Node(
         #     package='cugo_ros2_control',

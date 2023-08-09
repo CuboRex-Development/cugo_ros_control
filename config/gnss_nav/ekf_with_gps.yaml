@@ -211,8 +211,8 @@ navsat_transform:
     use_sim_time: false
     frequency: 2.0
     delay: 1.0
-    magnetic_declination_radians: 0.1309
-    yaw_offset: 0.0
+    magnetic_declination_radians: -0.137
+    yaw_offset: 1.57
     zero_altitude: true
     broadcast_utm_transform: true
     broadcast_utm_transform_as_parent_frame: true
