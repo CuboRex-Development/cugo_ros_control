@@ -21,11 +21,6 @@ def generate_launch_description():
             executable = 'witmotion_ros_node',
             parameters=[
                 os.path.join(get_package_share_directory('cugo_ros2_control') , 'config/imu/wt901.yml')
-            ],
-
-            remappings = [
-                ('scan','scan_raw'),
-                ('scan_filtered','scan')
             ]
-        ),
+        )
     ])
