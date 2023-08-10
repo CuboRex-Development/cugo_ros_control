@@ -18,9 +18,12 @@ def generate_launch_description():
                 {'READ_DATA_DISPLAY': True},
 
                 {'timeout': 0.05},
-                {'wheel_radius_l': 0.03858}, # default: CuGO V3
+                {'wheel_radius_l': 0.03880}, # default: CuGO V3
+#                {'wheel_radius_l': 0.03858}, # default: CuGO V3
                 {'wheel_radius_r': 0.03858}, # default: CuGO V3
-                {'tread': 0.460}, # default: CuGO V3
+#                {'wheel_radius_r': 0.03858}, # default: CuGO V3
+                {'tread': 0.474}, # default: CuGO V3
+#                {'tread': 0.460}, # default: CuGO V3
                 {'reduction_ratio': 1.0}, # default CuGO V3
                 {'encoder_max': 2147483647}, # -2147483648 ~ 2147483647(Arduinoのlong intは32bit)
                 {"encoder_resolution": 2048},
