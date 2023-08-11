@@ -1,4 +1,4 @@
-#!/bin/bash
+	#!/bin/bash
 # Apache License 2.0
 # Copyright (c) 2023, CuboRex Inc.
 
@@ -19,6 +19,7 @@ cd ../..
 
 
 echo "Install RPLIDAR package"
+sudo apt install -y ros-$ROS_DISTRO-filters
 git clone -b ros2 https://github.com/Slamtec/rplidar_ros.git
 git clone -b ros2 https://github.com/ros-perception/laser_filters.git
 echo ""
@@ -36,8 +37,8 @@ echo ""
 
 
 echo "u-blox gnss package"
+sudo apt install -y ros-$ROS_DISTRO-mapviz ros-$ROS_DISTRO-mapviz-plugins ros-$ROS_DISTRO-tile-map ros-$ROS_DISTRO-multires-image
 git clone -b foxy-devel https://github.com/KumarRobotics/ublox.git
-git clone -b ros2-devel https://github.com/swri-robotics/mapviz.git
 
 echo "u-blox status monitor package"
 git clone https://github.com/p3pperPi/ublox_status_monitor.git
