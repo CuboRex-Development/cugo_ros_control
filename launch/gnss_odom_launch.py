@@ -29,10 +29,10 @@ def generate_launch_description():
         'laser_filter_file', default_value='laser_filters/v3ros_filter.yaml'
     )
     
-    # Parameter for Navigation
+    # Parameter for Localization
     pkg_share = FindPackageShare(package='cugo_ros2_control').find('cugo_ros2_control')
     default_conf_dir = os.path.join(pkg_share, 'config/gnss_odom')
-    robot_localization_file_path = os.path.join(default_conf_dir, 'ekf_with_gps.yaml')
+    robot_localization_file_path = os.path.join(default_conf_dir, 'navsat_transform.yaml')
     
     use_sim_time = LaunchConfiguration('use_sim_time')
 
