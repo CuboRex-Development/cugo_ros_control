@@ -1,4 +1,4 @@
-	#!/bin/bash
+#!/bin/bash
 # Apache License 2.0
 # Copyright (c) 2023, CuboRex Inc.
 
@@ -46,7 +46,6 @@ git clone https://github.com/p3pperPi/ublox_status_monitor.git
 
 echo "Robot Localization Package"
 sudo apt install -y ros-foxy-robot-localization
-git clone -b foxy-devel https://github.com/nobleo/robot_localization.git
 
 
 # echo "Install Navigation Package"
