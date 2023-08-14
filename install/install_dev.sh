@@ -6,13 +6,6 @@ echo ""
 echo "Install the sensor packages used by CuGo."
 echo ""
 
-echo "--------- cmake version ---------"
-
-cmake --version
-
-read -p "cmake のバージョンは3.19以上でないとbuildできません。続けますか?(y/N): " yn
-case "$yn" in [yY]*) ;; *) echo "abort." ; exit ;; esac
-
 sudo apt update
 
 cd ../..
@@ -25,11 +18,22 @@ git clone -b ros2 https://github.com/ros-perception/laser_filters.git
 echo ""
 
 
-# ビルドのためには、ver3.19以上のCMakeが必要
-echo "Install Wit Motion IMU package"
-sudo apt install -y libqt5serialport5-dev
-git clone -b --recursive https://github.com/p3pperPi/witmotion_IMU_ros.git
-echo ""
+echo "--------- cmake version ---------"
+cmake --version
+read -p "IMUのパッケージ(witmotion_IMU_ros)は、cmake のバージョンが3.19以上でないとbuildできません。ダウンロードしますか?(y/N): " yn
+
+case "$yn" in
+	[yY]*)
+		sudo apt install -y libqt5serialport5-dev
+		git clone -b foxy-devel --recursive https://github.com/p3pperPi/witmotion_IMU_ros.git
+		echo ""
+		;;
+
+	*)
+		echo "witmotion_IMU_ros パッケージのダウンロードをスキップしました。"
+		;;
+esac
+
 
 
 # echo "Install EMCL2"
