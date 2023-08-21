@@ -206,6 +206,21 @@ def generate_launch_description():
                 ('scan_filtered','scan')
             ]
         ),
+        
+        # EKF : TF/Map -> odom
+        Node(
+                package='robot_localization',
+                executable='ekf_node',
+                name='ekf_map',
+                output='screen',
+                parameters=[
+                    robot_localization_file_path, 
+                    {'use_sim_time': use_sim_time}
+                ],
+                remappings=[
+                    ('odometry/filtered', 'odometry/global'),
+                ]
+        ),
 
         # navsatfix to odometory
         Node(
