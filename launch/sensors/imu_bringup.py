@@ -20,7 +20,7 @@ def generate_launch_description():
             package = 'witmotion_ros',
             executable = 'witmotion_ros_node',
             parameters=[
-                os.path.join(get_package_share_directory('cugo_ros2_control') , 'config/imu/wt901.yml')
+                os.path.join(get_package_share_directory('cugo_ros2_control') , 'config/sensors/wt901.yml')
             ]
         )
     ])

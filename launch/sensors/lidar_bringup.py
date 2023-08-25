@@ -25,7 +25,7 @@ def generate_launch_description():
 
     # args for laserfilter
     laser_filter_file = DeclareLaunchArgument(
-        'laser_filter_file', default_value='laser_filters/v3ros_filter.yaml'
+        'laser_filter_file', default_value='sensors/v3ros_filter.yaml'
     )
 
     return LaunchDescription([
@@ -97,7 +97,7 @@ def generate_launch_description():
             package = 'laser_filters', 
             executable = 'scan_to_scan_filter_chain',
             parameters=[
-                os.path.join(get_package_share_directory('cugo_ros2_control') , 'config/laser_filters/v3ros_filter.yaml')
+                os.path.join(get_package_share_directory('cugo_ros2_control') , 'config/sensors/v3ros_filter.yaml')
             ],
             remappings = [
                 ('scan','scan_raw'),
