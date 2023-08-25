@@ -69,16 +69,17 @@ def generate_launch_description():
         ),
         
         Node(
+            package = 'tf2_ros', 
+            executable = 'static_transform_publisher',
+            name = 'lidar_pos',
+            arguments = ['0','0','0.16','3.14','0','0',BASE_LINK,'laser']
+        ),
+        
+        Node(
             package = "tf2_ros",
             executable = "static_transform_publisher",
             name = "swri84_transform",
             arguments=["0", "0", "0", "0", "0", "0", "map", "wgs84"]
-        ),
-
-        Node(
-            package = 'tf2_ros', 
-            executable = 'static_transform_publisher',
-            arguments = ['0','0','0','0','0','0','map','odom']
         ),
 
         # LiDAR arg
@@ -237,6 +238,13 @@ def generate_launch_description():
                 ('gps/fix', 'fix'), 
                 ('odometry/filtered', 'wheel/odometry')
             ]
+        ),
+        
+        # GNSS Manager
+        Node(
+            package='GNSS_manager',
+            executable='GNSS_manager',
+            name='gnss_manager',
         ),
 
         # rviz
