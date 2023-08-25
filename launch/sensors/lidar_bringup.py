@@ -34,7 +34,7 @@ def generate_launch_description():
             package = 'tf2_ros', 
             executable = 'static_transform_publisher',
             name = 'baselink_to_lidar',
-            arguments = ['0','0','0.16','0','0','3.14','base_link','laser']
+            arguments = ['0','0','0.16','3.14','0','0','base_link','laser']
         ),
         
         # LiDAR arg
