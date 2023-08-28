@@ -1,8 +1,12 @@
 from launch import LaunchDescription
-from launch_ros.actions import Node
-from launch.actions import DeclareLaunchArgument
+from launch_ros.actions import (Node, LifecycleNode)
+from launch_ros.events.lifecycle import ChangeState
+from launch_ros.event_handlers import OnStateTransition
+from launch.events import matches_action
+from launch.actions import (DeclareLaunchArgument , RegisterEventHandler,LogInfo,EmitEvent)
 from launch.substitutions import LaunchConfiguration
 
+import lifecycle_msgs
 import os
 
 from ament_index_python.packages import get_package_share_directory
@@ -18,6 +22,16 @@ def generate_launch_description():
     scan_mode        = LaunchConfiguration('scan_mode', default='Sensitivity')
     scan_frequency   = LaunchConfiguration('scan_frequency', default='10')
     
+    # imu
+    imu_node = LifecycleNode(
+        package = 'rt_usb_9axisimu_driver',
+        executable = 'rt_usb_9axisimu_driver',
+        name = 'imu_rt',
+        parameters=[
+            os.path.join(get_package_share_directory('cugo_ros2_control') , 'config/sensors/RT-USB-9axisIMU2.yml')
+        ]
+    )
+
     
     return LaunchDescription([
         # LiDAR arg
@@ -86,15 +100,9 @@ def generate_launch_description():
                 os.path.join(get_package_share_directory('cugo_ros2_control') , 'config/sensors/D9CX1.yaml')
             ]
         ),
+        
         # imu
-        Node(
-            package = 'rt_usb_9axisimu_driver',
-            executable = 'rt_usb_9axisimu_driver',
-            name = 'imu_rt',
-            parameters=[
-                os.path.join(get_package_share_directory('cugo_ros2_control') , 'config/sensors/RT-USB-9axisIMU2.yml')
-            ]
-        ),
+        imu_node,
         
         # imu filter
         Node(
@@ -138,5 +146,32 @@ def generate_launch_description():
                 ('scan','scan_raw'),
                 ('scan_filtered','scan')
             ]
+        ),
+        
+        # imu node activation
+        # unconfigured -> inactive
+        EmitEvent(
+            event=ChangeState(
+                lifecycle_node_matcher=matches_action(imu_node),
+                transition_id=lifecycle_msgs.msg.Transition.TRANSITION_CONFIGURE,
+            )
+        ),
+        
+        # inactive -> active
+        RegisterEventHandler(
+            OnStateTransition(
+                target_lifecycle_node=imu_node, 
+                start_state = 'configuring',
+                goal_state  = 'inactive',
+                entities=[
+                    LogInfo(msg="IMU Node activated"),
+                    EmitEvent(
+                        event=ChangeState(
+                        lifecycle_node_matcher=matches_action(imu_node),
+                        transition_id=lifecycle_msgs.msg.Transition.TRANSITION_ACTIVATE,
+                        )
+                    ),
+                ],
+            )
         )
     ])
