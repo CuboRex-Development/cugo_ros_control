@@ -21,6 +21,12 @@
         <param name="odom_child_frame_id" value="base_footprint" />
         <param name="abnormal_translation_acc_limit" value="10.0" />
         <param name="abnormal_angular_acc_limit" value="7.85" />
+        <rosparam>
+          pose_covariance_diagonal: [0.001, 0.001, 1000000.0, 1000000.0, 1000000.0, 1000.0]
+        </rosparam>
+        <rosparam>
+          twist_covariance_diagonal: [0.001, 0.001, 1000000.0, 1000000.0, 1000000.0, 1000.0]
+        </rosparam>
 	<remap from="/cugo_ros_control/odom" to="/odom" />
     </node>
 </launch>
