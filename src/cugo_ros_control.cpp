@@ -295,12 +295,26 @@ void CugoController::publish()
   odom.pose.pose.position.y = odom_y;
   odom.pose.pose.position.z = 0.0;
   odom.pose.pose.orientation = odom_quat;
+  odom.pose.covariance = {
+    static_cast<double>(pose_cov_arry[0]), 0., 0., 0., 0., 0.,
+    0., static_cast<double>(pose_cov_arry[1]), 0., 0., 0., 0.,
+    0., 0., static_cast<double>(pose_cov_arry[2]), 0., 0., 0.,
+    0., 0., 0., static_cast<double>(pose_cov_arry[3]), 0., 0.,
+    0., 0., 0., 0., static_cast<double>(pose_cov_arry[4]), 0.,
+    0., 0., 0., 0., 0., static_cast<double>(pose_cov_arry[5]) };
 
   // set the velocity
   odom.child_frame_id = odom_child_frame_id;
   odom.twist.twist.linear.x = odom_twist_x;
   odom.twist.twist.linear.y = odom_twist_y;
   odom.twist.twist.angular.z = odom_twist_yaw;
+  odom.twist.covariance = {
+    static_cast<double>(twist_cov_arry[0]), 0., 0., 0., 0., 0.,
+    0., static_cast<double>(twist_cov_arry[1]), 0., 0., 0., 0.,
+    0., 0., static_cast<double>(twist_cov_arry[2]), 0., 0., 0.,
+    0., 0., 0., static_cast<double>(twist_cov_arry[3]), 0., 0.,
+    0., 0., 0., 0., static_cast<double>(twist_cov_arry[4]), 0.,
+    0., 0., 0., 0., 0., static_cast<double>(twist_cov_arry[5]) };
 
   view_odom();
   odom_pub.publish(odom);
