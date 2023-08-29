@@ -1,0 +1,13 @@
+imu_rt:
+  ros__parameters:
+    frame_id: "imu"
+    port: "/dev/ttyACM0"
+
+imu_filter:
+  ros__parameters:
+    use_mag: true
+    publish_tf: false
+    reverse_tf: false
+    world_frame: "ned"
+    fixed_frame: "imu"
+

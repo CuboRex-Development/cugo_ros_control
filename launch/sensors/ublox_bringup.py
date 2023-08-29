@@ -21,7 +21,7 @@ def generate_launch_description():
             executable = 'ublox_gps_node',
             output='both',
             parameters=[
-                os.path.join(get_package_share_directory('cugo_ros2_control') , 'config/gnss/D9CX1.yaml')
+                os.path.join(get_package_share_directory('cugo_ros2_control') , 'config/sensors/D9CX1.yaml')
             ]
         ),
     ])
