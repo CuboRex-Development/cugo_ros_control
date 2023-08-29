@@ -71,6 +71,9 @@ class CugoController {
     float abnormal_translation_acc_limit = 10.0;
     float abnormal_angular_acc_limit = 10.0 * M_PI / 4;
 
+    XmlRpc::XmlRpcValue pose_cov_arry;
+    XmlRpc::XmlRpcValue twist_cov_arry;
+
     int stop_motor_time = 500; //NavigationやコントローラからSubscriberできなかったときにモータを>止めるまでの時間(ms)
 
     float vector_v       = 0.0;

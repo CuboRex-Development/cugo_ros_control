@@ -32,6 +32,24 @@ CugoController::CugoController(ros::NodeHandle nh) : loop_rate(10)
   nh.param("abnormal_translation_acc_limit", abnormal_translation_acc_limit, (float)10.0);
   nh.param("abnormal_angular_acc_limit", abnormal_angular_acc_limit, (float)(10.0*M_PI/4));
 
+  // get and check params for covariances
+  nh.getParam("pose_covariance_diagonal", pose_cov_arry);
+  ROS_ASSERT(pose_cov_arry.getType() == XmlRpc::XmlRpcValue::TypeArray);
+  ROS_ASSERT(pose_cov_arry.size() == 6);
+  for(int i = 0; i < pose_cov_arry.size(); ++i)
+  {
+    ROS_ASSERT(pose_cov_arry[i].getType() == XmlRpc::XmlRpcValue::TypeDouble);
+  }
+
+  nh.getParam("twist_covariance_diagonal", twist_cov_arry);
+  ROS_ASSERT(twist_cov_arry.getType() == XmlRpc::XmlRpcValue::TypeArray);
+  ROS_ASSERT(twist_cov_arry.size() == 6);
+  for(int i = 0; i < twist_cov_arry.size(); ++i)
+  {
+    ROS_ASSERT(twist_cov_arry[i].getType() == XmlRpc::XmlRpcValue::TypeDouble);
+  }
+
+
   view_parameters();
   //view_init();
 }
