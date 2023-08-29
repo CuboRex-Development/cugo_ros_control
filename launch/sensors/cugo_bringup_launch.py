@@ -1,16 +1,11 @@
 from launch import LaunchDescription
 from launch_ros.actions import Node
-
 from launch.actions import DeclareLaunchArgument
-
-import os
-# from pathlib import Path
-
-from ament_index_python.packages import get_package_share_directory
-
-# from launch.actions import LogInfo
 from launch.substitutions import LaunchConfiguration
 
+import os
+
+from ament_index_python.packages import get_package_share_directory
 	
 def generate_launch_description():
     # args for lidar
@@ -22,21 +17,8 @@ def generate_launch_description():
     angle_compensate = LaunchConfiguration('angle_compensate', default='true')
     scan_mode        = LaunchConfiguration('scan_mode', default='Sensitivity')
     scan_frequency   = LaunchConfiguration('scan_frequency', default='10')
-
-    # args for laserfilter
-    laser_filter_file = DeclareLaunchArgument(
-        'laser_filter_file', default_value='laser_filters/v3ros_filter.yaml'
-    )
-
+    
     return LaunchDescription([
-        # static TF
-        Node(
-            package = 'tf2_ros', 
-            executable = 'static_transform_publisher',
-            name = 'baselink_to_lidar',
-            arguments = ['0','0','0.16','0','0','3.14','base_link','laser']
-        ),
-        
         # LiDAR arg
         DeclareLaunchArgument(
             'channel_type',
@@ -73,7 +55,45 @@ def generate_launch_description():
             default_value=scan_mode,
             description='Specifying scan mode of lidar'
         ),
-
+        
+        # static TF
+        Node(
+            package = 'tf2_ros', 
+            executable = 'static_transform_publisher',
+            name = 'baselink_to_lidar',
+            arguments = ['0','0','0.16','3.14','0','0','base_link','laser']
+        ),
+        Node(
+            package = 'tf2_ros', 
+            executable = 'static_transform_publisher',
+            name = 'baselink_to_imu',
+            arguments = ['0','0','0.09','0','0','0','base_link','imu']
+        ),
+        Node(
+            package = 'tf2_ros', 
+            executable = 'static_transform_publisher',
+            name = 'baselink_to_gps',
+            arguments = ['0.29','0.20','0.80','0','0','0','base_link','gps']
+        ),
+        
+        # ublox node
+        Node(
+            package = 'ublox_gps', 
+            executable = 'ublox_gps_node',
+            output='both',
+            parameters=[
+                os.path.join(get_package_share_directory('cugo_ros2_control') , 'config/sensors/D9CX1.yaml')
+            ]
+        ),
+        # imu
+        Node(
+            package = 'witmotion_ros',
+            executable = 'witmotion_ros_node',
+            parameters=[
+                os.path.join(get_package_share_directory('cugo_ros2_control') , 'config/sensors/wt901.yml')
+            ]
+        ),
+        
         # LiDAR
         Node(
             package='rplidar_ros',
@@ -97,7 +117,7 @@ def generate_launch_description():
             package = 'laser_filters', 
             executable = 'scan_to_scan_filter_chain',
             parameters=[
-                os.path.join(get_package_share_directory('cugo_ros2_control') , 'config/laser_filters/v3ros_filter.yaml')
+                os.path.join(get_package_share_directory('cugo_ros2_control') , 'config/sensors/v3ros_filter.yaml')
             ],
             remappings = [
                 ('scan','scan_raw'),
