@@ -12,8 +12,8 @@ def generate_launch_description():
     pkg_share         = FindPackageShare(package='cugo_ros2_control').find('cugo_ros2_control')
     
     launch_dir        = os.path.join(pkg_share       , 'launch')
-    default_conf_dir  = os.path.join(pkg_share       , 'config/gnss_odom')
-    default_ekf_conf  = os.path.join(default_conf_dir, 'navsat_transform.yaml')
+    default_conf_dir  = os.path.join(pkg_share       , 'config/gnss_localization')
+    default_ekf_conf  = os.path.join(default_conf_dir, 'gnss_localization.yaml')
     
     localization_conf = LaunchConfiguration('ekf_conf_file'      ,default=default_ekf_conf)
     use_sim_time      = LaunchConfiguration('use_sim_time'       ,default='false')
@@ -50,7 +50,7 @@ def generate_launch_description():
         
         # gps odometry ekf 
         IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(os.path.join(launch_dir, 'gnss_odom/gnss_odom_launch.py')),
+            PythonLaunchDescriptionSource(os.path.join(launch_dir, 'gnss_localization/gnss_localization_launch.py')),
             launch_arguments={'ekf_conf_file'    :localization_conf ,
                               'use_sim_time'     :use_sim_time      ,
                               'global_odom_topic':global_odom_topic ,

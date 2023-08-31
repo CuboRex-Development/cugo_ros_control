@@ -31,8 +31,8 @@ def generate_launch_description():
     
     # Parameter for Localization
     pkg_share = FindPackageShare(package='cugo_ros2_control').find('cugo_ros2_control')
-    default_conf_dir = os.path.join(pkg_share, 'config/gnss_odom')
-    robot_localization_file_path = os.path.join(default_conf_dir, 'navsat_transform.yaml')
+    default_conf_dir = os.path.join(pkg_share, 'config/gnss_localization')
+    robot_localization_file_path = os.path.join(default_conf_dir, 'gnss_localization.yaml')
     
     use_sim_time = LaunchConfiguration('use_sim_time')
 
