@@ -1,10 +1,12 @@
 import os
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
-from launch.substitutions import LaunchConfiguration
+from launch.substitutions import LaunchConfiguration, TextSubstitution
 
 from launch_ros.substitutions import FindPackageShare
 from launch_ros.actions import Node
+
+from ament_index_python.packages import get_package_share_directory
 
 
 def generate_launch_description():
@@ -19,7 +21,7 @@ def generate_launch_description():
     global_odom_topic = LaunchConfiguration('global_odom_topic',default='odometry/global')
     imu_topic         = LaunchConfiguration('imu_topic'        ,default='imu')
     gps_topic         = LaunchConfiguration('gps_topic'        ,default='fix')
-    
+    ekf_config_fullpath = LaunchConfiguration('ekf_config_fullpath')
     
     return LaunchDescription([
         # Parameters
@@ -29,6 +31,15 @@ def generate_launch_description():
         DeclareLaunchArgument('global_odom_topic',default_value = global_odom_topic,description = 'Topic name of odometry publishing EKF'),
         DeclareLaunchArgument('imu_topic'        ,default_value = imu_topic        ,description = 'Topic name of imu'),
         DeclareLaunchArgument('gps_topic'        ,default_value = gps_topic        ,description = 'Topic name of NavSatFix published by gps '),
+        DeclareLaunchArgument(
+            'ekf_config_fullpath',
+            default_value=[
+                TextSubstitution(text = get_package_share_directory('cugo_ros2_control')),
+                TextSubstitution(text = '/'),
+                localization_conf
+            ]
+        ),
+
         
         # EKF : TF/Map -> odom
         Node(
@@ -37,7 +48,7 @@ def generate_launch_description():
             name       ='ekf_map',
             output     ='screen',
             parameters =[
-                localization_conf, 
+                ekf_config_fullpath, 
                 {'use_sim_time': use_sim_time}
             ],
             remappings =[
@@ -52,7 +63,7 @@ def generate_launch_description():
             name       ='navsat_transform',
             output     ='screen',
             parameters =[
-                localization_conf, 
+                ekf_config_fullpath, 
                 {'use_sim_time': use_sim_time}
             ],
             remappings =[
