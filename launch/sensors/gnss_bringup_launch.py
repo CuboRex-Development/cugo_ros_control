@@ -2,7 +2,7 @@ import os
 
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
-from launch.substitutions import LaunchConfiguration
+from launch.substitutions import LaunchConfiguration, TextSubstitution
 
 from launch_ros.actions import Node
 
@@ -12,11 +12,20 @@ def generate_launch_description():
     # Parameters
     fix_topic         = LaunchConfiguration('fix_topic'        , default='fix')
     ublox_config_file = LaunchConfiguration('ublox_config_file', default='config/sensors/D9CX1.yaml')
-
+    ublox_config_fullpath = LaunchConfiguration('ublox_config_fullpath')
+    
     return LaunchDescription([
         # Parameters
         DeclareLaunchArgument('fix_topic'        , default_value=fix_topic        , description='Topic name of NavSatFix.msg'),
         DeclareLaunchArgument('ublox_config_file', default_value=ublox_config_file, description='File name of Ublox config'),
+        DeclareLaunchArgument(
+            'ublox_config_fullpath',
+            default_value=[
+                TextSubstitution(text = get_package_share_directory('cugo_ros2_control')),
+                TextSubstitution(text = '/'),
+                ublox_config_file
+            ]
+        ),
 
         # static tf
         Node(
@@ -32,9 +41,10 @@ def generate_launch_description():
             executable = 'ublox_gps_node',
             output     = 'both',
             parameters = [
-                os.path.join(get_package_share_directory('cugo_ros2_control') ,ublox_config_file)
+                ublox_config_fullpath
+                # os.path.join(get_package_share_directory('cugo_ros2_control') ,ublox_config_file)
             ],
-            remapping = [
+            remappings = [
                 ('fix',fix_topic)
             ]
         )

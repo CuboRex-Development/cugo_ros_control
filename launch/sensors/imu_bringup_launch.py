@@ -12,11 +12,20 @@ def generate_launch_description():
     # Parameters
     imu_topic       = LaunchConfiguration('imu_topic'      , default='imu')
     imu_config_file = LaunchConfiguration('imu_config_file', default='config/sensors/wt901.yml')
+    imu_config_fullpath    = LaunchConfiguration('imu_config_fullpath')
 
     return LaunchDescription([    
         # Parameters
         DeclareLaunchArgument('imu_topic'      , default_value=imu_topic      , description='Topic name of Imu.msg'),
         DeclareLaunchArgument('imu_config_file', default_value=imu_config_file, description='File name of witmotion config'),
+        DeclareLaunchArgument(
+            'imu_config_fullpath',
+            default_value=[
+                TextSubstitution(text = get_package_share_directory('cugo_ros2_control')),
+                TextSubstitution(text = '/'),
+                imu_config_file
+            ]
+        ),
 
         # static tf
         Node(
@@ -31,7 +40,7 @@ def generate_launch_description():
             package    = 'witmotion_ros',
             executable = 'witmotion_ros_node',
             parameters = [
-                os.path.join(get_package_share_directory('cugo_ros2_control') , imu_config_file)
+                imu_config_fullpath
             ],
             remappings = [
                 ('imu',imu_topic)

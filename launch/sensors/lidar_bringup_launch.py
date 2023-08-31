@@ -2,7 +2,7 @@ import os
 
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
-from launch.substitutions import LaunchConfiguration
+from launch.substitutions import LaunchConfiguration, TextSubstitution
 
 from launch_ros.actions import Node
 
@@ -17,10 +17,10 @@ def generate_launch_description():
     frame_id          = LaunchConfiguration('frame_id'         , default='laser')
     inverted          = LaunchConfiguration('inverted'         , default='false')
     angle_compensate  = LaunchConfiguration('angle_compensate' , default='true')
-    scan_mode         = LaunchConfiguration('scan_mode'        , default='Sensitivity')
-    scan_frequency    = LaunchConfiguration('scan_frequency'   , default='10')
+    scan_mode         = LaunchConfiguration('scan_mode'        , default='Sensitivdity')
     scan_topic        = LaunchConfiguration('scan_topic'       , default='scan')
     laser_filter_file = LaunchConfiguration('laser_filter_file', default='config/sensors/v3ros_filter.yaml')
+    laser_filter_fullpath = LaunchConfiguration('laser_filter_fullpath')
 
     return LaunchDescription([
         # Parameters
@@ -31,9 +31,17 @@ def generate_launch_description():
         DeclareLaunchArgument('inverted'         , default_value=inverted         , description='Specifying whether or not to invert scan data'),
         DeclareLaunchArgument('angle_compensate' , default_value=angle_compensate , description='Specifying whether or not to enable angle_compensate of scan data'),
         DeclareLaunchArgument('scan_mode'        , default_value=scan_mode        , description='Specifying scan mode of lidar'),
-        DeclareLaunchArgument('scan_frequency'   , default_value=scan_frequency   , description='Specifying scan frequency of lidar'),
         DeclareLaunchArgument('scan_topic'       , default_value=scan_topic       , description='Topic name of LaserScan.msg'),
         DeclareLaunchArgument('laser_filter_file', default_value=laser_filter_file, description='File name of laser filter'),
+        DeclareLaunchArgument(
+            'laser_filter_fullpath',
+            default_value=[
+                TextSubstitution(text = get_package_share_directory('cugo_ros2_control')),
+                TextSubstitution(text = '/'),
+                laser_filter_file
+            ]
+        ),
+
         
         # static TF
         Node(
@@ -54,8 +62,7 @@ def generate_launch_description():
                          'frame_id'        : frame_id,
                          'inverted'        : inverted,
                          'angle_compensate': angle_compensate,
-                         'scan_mode'       : scan_mode,
-                         'scan_frequency'  : scan_frequency}],
+                         'scan_mode'       : scan_mode}],
             output='screen',
             remappings = [
                 ('scan','scan_raw'),
@@ -67,7 +74,8 @@ def generate_launch_description():
             package   = 'laser_filters', 
             executable= 'scan_to_scan_filter_chain',
             parameters=[
-                os.path.join(get_package_share_directory('cugo_ros2_control') , laser_filter_file)
+                laser_filter_fullpath
+                # os.path.join(get_package_share_directory('cugo_ros2_control') , laser_filter_file)
             ],
             remappings=[
                 ('scan','scan_raw'),
