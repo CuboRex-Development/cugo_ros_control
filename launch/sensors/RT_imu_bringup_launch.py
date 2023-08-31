@@ -1,10 +1,11 @@
 import os
 
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, EmitEvent , TimerAction
-from launch.substitutions import LaunchConfiguration
+from launch.actions import DeclareLaunchArgument, EmitEvent , TimerAction, RegisterEventHandler
+from launch.substitutions import LaunchConfiguration, TextSubstitution
+from launch.event_handlers.on_process_start import OnProcessStart
 
-from launch_ros.actions import Node
+from launch_ros.actions import Node, LifecycleNode
 import launch_ros.events
 import launch_ros.events.lifecycle
 
@@ -33,15 +34,7 @@ def generate_launch_description():
                 arguments  = ['0','0','0.09','0','0','0','base_link','imu']
             ),
             
-            # imu
-            Node(
-                package    = 'rt_usb_9axisimu_driver',
-                executable = 'rt_usb_9axisimu_driver',
-                name       = 'imu_rt',
-                parameters = [
-                    os.path.join(get_package_share_directory('cugo_ros2_control') , imu_config_file)
-                ]
-            ),
+            imu_node,
             
             # imu filter
             Node(
@@ -57,18 +50,33 @@ def generate_launch_description():
             ),
             
             # Lifecycleの設定
-            EmitEvent(
-                event=launch_ros.events.lifecycle.ChangeState(
-                    lifecycle_node_matcher=launch_ros.events.lifecycle.matches_node_name('/imu_rt'),
-                    transition_id=lifecycle_msgs.msg.Transition.TRANSITION_CONFIGURE,
+            RegisterEventHandler(#イベントハンドラの登録
+                OnProcessStart(#プロセス起動イベント
+                    target_action=imu_node,#ターゲットのノード
+                    on_start=[
+                        EmitEvent(
+                            event=launch_ros.events.lifecycle.ChangeState(
+                                lifecycle_node_matcher=launch_ros.events.lifecycle.matches_node_name('/imu_rt'),
+                                transition_id=lifecycle_msgs.msg.Transition.TRANSITION_CONFIGURE,
+                            )
+                        )
+                    ]
                 )
             ),
             
-            EmitEvent(
-                event=launch_ros.events.lifecycle.ChangeState(
-                    lifecycle_node_matcher=launch_ros.events.lifecycle.matches_node_name('/imu_rt'),
-                    transition_id=lifecycle_msgs.msg.Transition.TRANSITION_ACTIVATE,
+            RegisterEventHandler(#イベントハンドラの登録
+                launch_ros.event_handlers.OnStateTransition(#lifecycle_nodeが状態遷移したときのイベント
+                    target_lifecycle_node=imu_node,# ターゲットノード
+                    start_state='configuring', goal_state='inactive',# どの状態からどの状態へ遷移したかを書く
+                    entities=[
+                        EmitEvent(
+                            event=launch_ros.events.lifecycle.ChangeState(
+                                lifecycle_node_matcher=launch_ros.events.lifecycle.matches_node_name('/imu_rt'),
+                                transition_id=lifecycle_msgs.msg.Transition.TRANSITION_ACTIVATE,
+                            )
+                        )
+                    ]
                 )
-            )
+            )            
         ])
     ])
