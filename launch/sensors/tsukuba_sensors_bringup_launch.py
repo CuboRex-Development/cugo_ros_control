@@ -16,7 +16,7 @@ def generate_launch_description():
     # Parameters
     # imu
     imu_topic       = LaunchConfiguration('imu_topic'      , default='imu')
-    imu_config_file = LaunchConfiguration('imu_config_file', default='config/sensors/wt901.yml')
+    imu_config_file = LaunchConfiguration('imu_config_file', default='config/sensors/RT-USB-9axisIMU2.yml')
     filter_config_file = LaunchConfiguration('filter_config_file', default='config/sensors/RT-USB-9axisIMU2.yml')
     
     # LiDAR
