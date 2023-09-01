@@ -19,7 +19,7 @@ ekf_map:
     world_frame: map
 
     # sensor config 
-    odom0: /cugo_ros2_control/wheel/odometry
+    odom0: cugo_ros2_control/wheel/odometry
     odom0_config: [false, false, false,
                    false, false, true ,
                    false, false, false,
