@@ -21,9 +21,9 @@ ekf_map:
     # sensor config 
     odom0: cugo_ros2_control/wheel/odometry
     odom0_config: [false, false, false,
-                   false, false, true ,
+                   false, false, false ,
                    false, false, false,
-                   false, false, false,
+                   false, false, true,
                    false, false, false]
     odom0_queue_size: 2
     odom0_nodelay: false
@@ -44,7 +44,7 @@ ekf_map:
 
     imu0: imu
     imu0_config: [false, false, false,
-                  false, false, false,
+                  false, false, true,
                   false, false, false,
                   false, false, true ,
                   false, false, false]    
