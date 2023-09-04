@@ -63,7 +63,10 @@ def generate_launch_description():
                     }.items()
                 ),
                 IncludeLaunchDescription(
-                    PythonLaunchDescriptionSource(os.path.join(launch_dir, 'navigation/tsukuba_navigation_launch.py')),
+                    PythonLaunchDescriptionSource(os.path.join(launch_dir, 'navigation/GNSS_navigation_launch.py')),
+                    launch_arguments={
+                        'map'               :os.path.join(pkg_share, 'map', 'map_white.yaml')
+                    }.items()
                 ),
                 IncludeLaunchDescription(
                     PythonLaunchDescriptionSource(os.path.join(launch_dir, 'cugo_ros2_control_launch.py')),
