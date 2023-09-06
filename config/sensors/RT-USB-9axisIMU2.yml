@@ -10,4 +10,4 @@ imu_filter:
     reverse_tf: false
     world_frame: "ned"
     fixed_frame: "imu"
-
+    orientation_stddev: 0.2
