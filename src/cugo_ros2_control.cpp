@@ -55,6 +55,11 @@ CugoController::CugoController()
   this->declare_parameter("abnormal_angular_acc_limit", (float)10.0*M_PI/4);
   abnormal_angular_acc_limit = this->get_parameter("abnormal_angular_acc_limit").as_double();
 
+  this->declare_parameter("pose_covariance" ,std::vector<double> (6,0.0));
+  pose_covariance  = this->get_parameter("pose_covariance").as_double_array();
+  this->declare_parameter("twist_covariance",std::vector<double> (6,0.0));
+  twist_covariance = this->get_parameter("twist_covariance").as_double_array();
+
   view_parameters();
   //view_init();
 }
@@ -293,11 +298,29 @@ void CugoController::publish()
   odom.pose.pose.position.z = 0.0;
   odom.pose.pose.orientation = odom_quat;
 
+  // set the pose covariance
+  odom.pose.covariance = {
+    pose_covariance[0] , 0.0 , 0.0 , 0.0 , 0.0 , 0.0,
+    0.0 , pose_covariance[1] , 0.0 , 0.0 , 0.0 , 0.0,
+    0.0 , 0.0 , pose_covariance[2] , 0.0 , 0.0 , 0.0,
+    0.0 , 0.0 , 0.0 , pose_covariance[3] , 0.0 , 0.0,
+    0.0 , 0.0 , 0.0 , 0.0 , pose_covariance[4] , 0.0,
+    0.0 , 0.0 , 0.0 , 0.0 , 0.0 , pose_covariance[5]};
+
   // set the velocity
   odom.child_frame_id = odom_child_frame_id;
   odom.twist.twist.linear.x = odom_twist_x;
   odom.twist.twist.linear.y = odom_twist_y;
   odom.twist.twist.angular.z = odom_twist_yaw;
+
+  // set the twist covariance
+  odom.twist.covariance = {
+    twist_covariance[0] , 0.0 , 0.0 , 0.0 , 0.0 , 0.0,
+    0.0 , twist_covariance[1] , 0.0 , 0.0 , 0.0 , 0.0,
+    0.0 , 0.0 , twist_covariance[2] , 0.0 , 0.0 , 0.0,
+    0.0 , 0.0 , 0.0 , twist_covariance[3] , 0.0 , 0.0,
+    0.0 , 0.0 , 0.0 , 0.0 , twist_covariance[4] , 0.0,
+    0.0 , 0.0 , 0.0 , 0.0 , 0.0 , twist_covariance[5]};
 
   view_odom();
   odom_pub_->publish(odom);

@@ -31,6 +31,9 @@ def generate_launch_description():
     # TODO: パラメータを変更してもトピック名が変わらないので修正
     odom_topic                     = LaunchConfiguration('odom_topic_name'               ,default='odom')
 
+    pose_covariance                = LaunchConfiguration('pose_covariance'               ,default='[0.001, 0.001, 1000000.0, 1000000.0, 1000000.0, 1.0]')
+    twist_covariance               = LaunchConfiguration('twist_covariance'              ,default='[0.001, 0.001, 1000000.0, 1000000.0, 1000000.0, 1.0]')
+
     return LaunchDescription([
         # Parameter
         DeclareLaunchArgument('ODOMETRY_DISPLAY'              ,default_value=ODOMETRY_DISPLAY),
@@ -54,6 +57,9 @@ def generate_launch_description():
         DeclareLaunchArgument('abnormal_translation_acc_limit',default_value=abnormal_translation_acc_limit),
         DeclareLaunchArgument('abnormal_angular_acc_limit'    ,default_value=abnormal_angular_acc_limit),
         DeclareLaunchArgument('odom_topic_name'               ,default_value=odom_topic),
+        DeclareLaunchArgument('pose_covariance'               ,default_value=pose_covariance),
+        DeclareLaunchArgument('twist_covariance'              ,default_value=twist_covariance),
+        
         
         #Cugo 
         Node(
@@ -81,7 +87,9 @@ def generate_launch_description():
                 {'odom_frame_id'                 : odom_frame_id},
                 {'odom_child_frame_id'           : odom_child_frame_id},
                 {'abnormal_translation_acc_limit': abnormal_translation_acc_limit},
-                {'abnormal_angular_acc_limit'    : abnormal_angular_acc_limit}
+                {'abnormal_angular_acc_limit'    : abnormal_angular_acc_limit},
+                {'pose_covariance'               : pose_covariance},
+                {'twist_covariance'              : twist_covariance}
             ],
             remappings = [
                 ('odom',odom_topic),
