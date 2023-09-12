@@ -8,7 +8,7 @@ ekf_map:
     transform_time_offset: 0.0
     transform_timeout: 0.0
     print_diagnostics: true
-    debug: false
+    debug: true
     debug_out_file: debug.txt
     publish_tf: true
     reset_on_time_jump: true
@@ -31,29 +31,16 @@ ekf_map:
     odom0_differential: false
     odom0_relative: false
 
-    # odom1: cugo_ros2_control/wheel/odometry
-    # odom1_config: [true , true , false,
-    #                false, false, true  ,
-    #                true , true , false,
-    #                false, false, false,
-    #                false, false, false]
-    # odom1_queue_size: 2
-    # odom1_nodelay: false
-    # odom1_differential: false
-    # odom1_relative: false
-
-
-    twist0: /fix_velocity
-    twist0_config: [false, false, false ,
-                    false, false, false,
-                    true , true , false,
-                    false, false, false,
-                    false, false, false]
-    twist0_queue_size: 1
-    twist0_nodelay: false
-    twist0_differential: false
-    twist0_relative: false
-
+    odom1: cugo_ros2_control/wheel/odometry
+    odom1_config: [false, false, false,
+                   false, false, true  ,
+                   true , true , false,
+                   false, false, false,
+                   false, false, false]
+    odom1_queue_size: 2
+    odom1_nodelay: false
+    odom1_differential: false
+    odom1_relative: false
 
     imu0: imu
     imu0_config: [false, false, false,
@@ -70,20 +57,20 @@ ekf_map:
     use_control: false
 
     #                          x       y       z       r       p       y        dx       dy       dz      dr      dp      dy      ddx     ddy     ddz
-    process_noise_covariance: [0.0001, 0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
-                               0.0,    0.0001, 0.0,    0.0,    0.0,    0.0,     0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
+    process_noise_covariance: [0.1,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
+                               0.0,    0.1,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
                                0.0,    0.0,   10.0,    0.0,    0.0,    0.0,     0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
                                0.0,    0.0,    0.0,   10.0,    0.0,    0.0,     0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
                                0.0,    0.0,    0.0,    0.0,   10.0,    0.0,     0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
-                               0.0,    0.0,    0.0,    0.0,    0.0,    0.000001,0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
-                               0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.001,   0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
-                               0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.001,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
+                               0.0,    0.0,    0.0,    0.0,    0.0,    0.001,   0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
+                               0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.01,    0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
+                               0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.01,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
                                0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,    10.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
                                0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,     0.0,   10.0,    0.0,    0.0,    0.0,    0.0,    0.0,
                                0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,     0.0,    0.0,   10.0,    0.0,    0.0,    0.0,    0.0,
-                               0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,     0.0,    0.0,    0.0,    0.1,    0.0,    0.0,    0.0,
-                               0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.01,   0.0,    0.0,
-                               0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.01,   0.0,
+                               0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,     0.0,    0.0,    0.0,    0.01,   0.0,    0.0,    0.0,
+                               0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    1.0,    0.0,    0.0,
+                               0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    1.0,    0.0,
                                0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.1]
 
     initial_estimate_covariance: [1e-9,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,     0.0,    0.0,    0.0,
