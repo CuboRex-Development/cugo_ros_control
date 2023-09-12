@@ -108,6 +108,10 @@ class CugoController : public rclcpp::Node
     int checksum_err_count = 0;
     int diff_err_count = 0;
 
+    std::vector<double>  pose_covariance;
+    std::vector<double>  twist_covariance;
+    
+
     // 故障代替値
     float alt_recv_encoder_l = 0.0;
     float alt_recv_encoder_r = 0.0;
