@@ -12,7 +12,6 @@ from ament_index_python.packages import get_package_share_directory
 def generate_launch_description():
     default_ekf_conf  = 'config/gnss_localization/gnss_localization.yaml'
     
-    
     localization_conf = LaunchConfiguration('ekf_conf_file'    ,default=default_ekf_conf)
     use_sim_time      = LaunchConfiguration('use_sim_time'     ,default=False)
     wheel_odom_topic  = LaunchConfiguration('wheel_odom_topic' ,default='cugo_ros2_control/wheel/odometry')
@@ -46,8 +45,7 @@ def generate_launch_description():
             name       ='ekf_map',
             output     ='screen',
             parameters =[
-                ekf_config_fullpath, 
-                {'use_sim_time': use_sim_time}
+                ekf_config_fullpath
             ],
             remappings =[
                 ('odometry/filtered', global_odom_topic),
@@ -61,8 +59,7 @@ def generate_launch_description():
             name       ='navsat_transform',
             output     ='screen',
             parameters =[
-                ekf_config_fullpath, 
-                {'use_sim_time': use_sim_time}
+                ekf_config_fullpath
             ],
             remappings =[
                 ('imu'              , imu_topic),
