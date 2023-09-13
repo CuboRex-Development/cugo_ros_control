@@ -10,14 +10,12 @@ from ament_index_python.packages import get_package_share_directory
 
 
 def generate_launch_description():
-    pkg_share         = FindPackageShare(package='cugo_ros2_control').find('cugo_ros2_control')
-    default_conf_dir  = os.path.join(pkg_share       , 'config/gnss_localization')
-    default_ekf_conf  = os.path.join(default_conf_dir, 'gnss_localization.yaml')
+    default_ekf_conf  = 'config/gnss_localization/gnss_localization.yaml'
     
     
     localization_conf = LaunchConfiguration('ekf_conf_file'    ,default=default_ekf_conf)
-    use_sim_time      = LaunchConfiguration('use_sim_time'     ,default='false')
-    wheel_odom_topic  = LaunchConfiguration('wheel_odom_topic' ,default='wheel/odometry')
+    use_sim_time      = LaunchConfiguration('use_sim_time'     ,default=False)
+    wheel_odom_topic  = LaunchConfiguration('wheel_odom_topic' ,default='cugo_ros2_control/wheel/odometry')
     global_odom_topic = LaunchConfiguration('global_odom_topic',default='odometry/global')
     imu_topic         = LaunchConfiguration('imu_topic'        ,default='imu')
     gps_topic         = LaunchConfiguration('gps_topic'        ,default='fix')
