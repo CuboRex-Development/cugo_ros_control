@@ -1,6 +1,6 @@
 ekf_map:
   ros__parameters:
-    use_sim_time: false
+    use_sim_time: true
 
     frequency: 20.0
     sensor_timeout: 0.2
@@ -33,9 +33,9 @@ ekf_map:
 
     odom1: cugo_ros2_control/wheel/odometry
     odom1_config: [false, false, false,
-                   false, false, true  ,
-                   true , true , false,
                    false, false, false,
+                   true , true , false,
+                   false, false, true ,
                    false, false, false]
     odom1_queue_size: 2
     odom1_nodelay: false
@@ -46,25 +46,25 @@ ekf_map:
     imu0_config: [false, false, false,
                   false, false, true,
                   false, false, false,
-                  false, false, true ,
-                  true , true , false]    
+                  false, false, true,
+                  true , false, false]    
     imu0_nodelay: false
     imu0_differential: false
     imu0_relative: false
-    imu0_queue_size: 10
+    imu0_queue_size: 1
     imu0_remove_gravitational_acceleration: true
 
     use_control: false
 
     #                          x       y       z       r       p       y        dx       dy       dz      dr      dp      dy      ddx     ddy     ddz
-    process_noise_covariance: [0.1,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
-                               0.0,    0.1,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
+    process_noise_covariance: [2.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
+                               0.0,    2.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
                                0.0,    0.0,   10.0,    0.0,    0.0,    0.0,     0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
                                0.0,    0.0,    0.0,   10.0,    0.0,    0.0,     0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
                                0.0,    0.0,    0.0,    0.0,   10.0,    0.0,     0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
-                               0.0,    0.0,    0.0,    0.0,    0.0,    0.001,   0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
+                               0.0,    0.0,    0.0,    0.0,    0.0,    0.1,   0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
                                0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.01,    0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
-                               0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.01,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
+                               0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.00001,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
                                0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,    10.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
                                0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,     0.0,   10.0,    0.0,    0.0,    0.0,    0.0,    0.0,
                                0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,     0.0,    0.0,   10.0,    0.0,    0.0,    0.0,    0.0,
@@ -90,11 +90,11 @@ ekf_map:
                                   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,     0.0,    0.0,    1e-9]
 navsat_transform:
   ros__parameters:
-    use_sim_time: false
-    frequency: 10.0
-    delay: 1.0
-    magnetic_declination_radians: -0.137
-    yaw_offset: 1.57
+    use_sim_time: true
+    frequency: 5.0
+    delay: 0.01
+    # magnetic_declination_radians: -0.137
+    yaw_offset: 0.0
     zero_altitude: true
     broadcast_cartesian_transform: true
     broadcast_utm_transform: true
