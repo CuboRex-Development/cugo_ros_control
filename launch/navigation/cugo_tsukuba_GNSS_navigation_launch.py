@@ -22,7 +22,7 @@ def generate_launch_description():
         GroupAction(
             actions = [
                 # remap
-                SetRemap(src='/wheel/odometry',dst='wheel/odometry'),
+                SetRemap(src='/wheel/odometry',dst='wheel/odometry/raw'),
                 SetRemap(src='/odom',dst='wheel/odometry'),
 
                 Node(

@@ -1,0 +1,7 @@
+gnss_odom_publisher:
+  ros__parameters:
+    publish_topic_name: odometry/gps        # subscribeするトピック名
+    subscribe_topic_name: odometry/gps/raw  # publishするトピック名
+    frame_id: map                           # publishするトピックのframe_id
+    pose_covariance_magnification: 0.7      # pose position covarianceの倍率
+    distance_threshold: 0.06                # 前回からの移動量。この設定値以下の移動量だった場合、pose yaw covarianceは問答無用で2pi^2となる
