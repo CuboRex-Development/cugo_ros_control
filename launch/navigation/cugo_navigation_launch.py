@@ -42,7 +42,7 @@ def generate_launch_description():
 
     return LaunchDescription([
         IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(os.path.join(sensor_launch_dir, 'lidar_bringup.py'))
+            PythonLaunchDescriptionSource(os.path.join(sensor_launch_dir, 'sensors/lidar_bringup_launch.py'))
         ),
 
         IncludeLaunchDescription(
