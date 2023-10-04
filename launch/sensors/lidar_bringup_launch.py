@@ -17,7 +17,7 @@ def generate_launch_description():
     frame_id          = LaunchConfiguration('frame_id'         , default='laser')
     inverted          = LaunchConfiguration('inverted'         , default='false')
     angle_compensate  = LaunchConfiguration('angle_compensate' , default='true')
-    scan_mode         = LaunchConfiguration('scan_mode'        , default='Sensitivdity')
+    scan_mode         = LaunchConfiguration('scan_mode'        , default='Sensitivity')
     scan_topic        = LaunchConfiguration('scan_topic'       , default='scan')
     laser_filter_file = LaunchConfiguration('laser_filter_file', default='config/sensors/v3ros_filter.yaml')
     laser_filter_fullpath = LaunchConfiguration('laser_filter_fullpath')
