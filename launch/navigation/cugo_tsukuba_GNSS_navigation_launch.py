@@ -78,7 +78,7 @@ def generate_launch_description():
                         'odom_frame_id'       : 'odom',
                         'odom_child_frame_id' : 'base_link',
                         'pose_covariance'     : '[0.001, 0.001, 1000000.0, 1000000.0, 1000000.0, 1.0]',
-                        'twist_covariance'    : '[0.001, 0.001, 1000000.0, 1000000.0, 1000000.0, 1.0]'
+                        'twist_covariance'    : '[0.001, 0.001, 1000000.0, 1000000.0, 1000000.0, 0.01]'
                     }.items()
                 )
         ])
