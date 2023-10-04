@@ -14,25 +14,73 @@ scan_to_scan_filter_chain:
         invert: false    
     filter2:
       name: al_frame_front_right
-      type: laser_filters/LaserScanAngularBoundsFilterInPlace
+      type: laser_filters/LaserScanBoxFilter
       params:
-        angle_max: 2.36
-        angle_min: 2.10
+        box_frame: laser
+        max_x: 0.31
+        max_y: 0.50
+        max_z: 0.35
+        min_x: 0.15
+        min_y: 0.24
+        min_z: -0.25
+        invert: false    
     filter3:
       name: al_frame_rear_right
-      type: laser_filters/LaserScanAngularBoundsFilterInPlace
+      type: laser_filters/LaserScanBoxFilter
       params:
-        angle_max: 1.06
-        angle_min: 0.84
+        box_frame: laser
+        max_x: 0.31
+        max_y: -0.24
+        max_z: 0.35
+        min_x: 0.15
+        min_y: -0.50
+        min_z: -0.25
+        invert: false    
     filter4:
       name: al_frame_rear_left
-      type: laser_filters/LaserScanAngularBoundsFilterInPlace
+      type: laser_filters/LaserScanBoxFilter
       params:
-        angle_min: -1.06
-        angle_max: -0.84
+        box_frame: laser
+        max_x: -0.15
+        max_y: 0.50
+        max_z: 0.35
+        min_x: -0.31
+        min_y: 0.24
+        min_z: -0.25
+        invert: false    
     filter5:
       name: al_frame_front_left
-      type: laser_filters/LaserScanAngularBoundsFilterInPlace
+      type: laser_filters/LaserScanBoxFilter
       params:
-        angle_min: -2.36
-        angle_max: -2.10
+        box_frame: laser
+        max_x: -0.15
+        max_y: -0.24
+        max_z: 0.35
+        min_x: -0.31
+        min_y: -0.50
+        min_z: -0.25
+        invert: false    
+    # filter2:
+    #   name: al_frame_front_right
+    #   type: laser_filters/LaserScanAngularBoundsFilterInPlace
+    #   params:
+    #     angle_max: 2.36
+    #     angle_min: 2.10
+    # filter3:
+    #   name: al_frame_rear_right
+    #   type: laser_filters/LaserScanAngularBoundsFilterInPlace
+    #   params:
+    #     angle_max: 1.06
+    #     angle_min: 0.84
+    # filter4:
+    #   name: al_frame_rear_left
+    #   type: laser_filters/LaserScanAngularBoundsFilterInPlace
+    #   params:
+    #     angle_min: -1.06
+    #     angle_max: -0.84
+    # filter5:
+    #   name: al_frame_front_left
+    #   type: laser_filters/LaserScanAngularBoundsFilterInPlace
+    #   params:
+    #     angle_min: -2.36
+    #     angle_max: -2.10
