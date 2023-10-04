@@ -3,7 +3,7 @@ imu_rt:
     frame_id: "imu"
     port: "/dev/ttyACM0"
     linear_acceleration_stddev: 20.0
-    # angular_velocity_stddev: 0.0010621
+    angular_velocity_stddev: 0.1
     # magnetic_field_stddev: 0.00000080786
 
 imu_filter:
@@ -13,4 +13,9 @@ imu_filter:
     reverse_tf: false
     world_frame: "ned"
     fixed_frame: "imu"
-    orientation_stddev: 0.0001
+    orientation_stddev: 1.0
+    mag_bias_x:  0.000011
+    mag_bias_y:  0.000003
+    mag_bias_z: -0.0000385
+    yaw_offset: 1.7
+    gain: 0.7
