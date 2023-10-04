@@ -69,9 +69,9 @@ def generate_launch_description():
         ),
         
         # GNSS Manager
-        Node(
-            package    ='GNSS_manager',
-            executable ='GNSS_manager',
-            name       ='gnss_manager'
-        )
+        # Node(
+        #     package    ='GNSS_manager',
+        #     executable ='GNSS_manager',
+        #     name       ='gnss_manager'
+        # )
     ])
