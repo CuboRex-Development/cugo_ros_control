@@ -303,8 +303,6 @@ void CugoController::serial_send_cmd()
   // バッファの初期化
   memset(body, 0x00, sizeof(body));
 
-  std::cout << "target_rpm (l,r) : " << target_rpm_l << ", " << target_rpm_r << std::endl; 
-
   // バッファへのbodyデータの書き込み
   write_float_to_buf(body, TARGET_RPM_L_PTR, target_rpm_l);
   write_float_to_buf(body, TARGET_RPM_R_PTR, target_rpm_r);
@@ -387,6 +385,49 @@ void CugoController::UDP_send_initial_cmd()
 
 void CugoController::serial_send_initial_cmd()
 {
+  // ボディデータ用バッファの作成
+  unsigned char body[SERIAL_BUFF_SIZE];
+  // バッファの初期化
+  memset(body, 0x00, sizeof(body));
+
+  // TODO 内部状態の初期パラメータを与える。現状はUDP_send_cmdと同等になっている。
+  // バッファへのbodyデータの書き込み
+  write_float_to_buf(body, TARGET_RPM_L_PTR, target_rpm_l);
+  write_float_to_buf(body, TARGET_RPM_R_PTR, target_rpm_r);
+
+  // チェックサムを計算
+  uint16_t checksum = calculate_checksum(body, SERIAL_BUFF_SIZE);
+  //printf("send calc_checksum: %x\n", checksum);
+
+  // UDPヘッダの作成
+  UdpHeader header;
+  header.sourcePort = htons(source_port);
+  header.destinationPort = htons(arduino_port);
+  header.length = sizeof(UdpHeader) + sizeof(body);
+  header.checksum = checksum;
+
+  // UDPパケットの作成
+  unsigned char* packet = new unsigned char[header.length];
+  create_serial_packet(packet, &header, body);
+
+  // UDPパケットの送信
+  UDP_send_time = this->get_clock()->now();
+  unsigned char* cobs_packet = new unsigned char[header.length+3];
+  // 送信データをCOBS形式にエンコード
+  int cobs_len = encode_COBS(packet, header.length, cobs_packet);
+  cobs_packet[header.length+1] = 0;
+  int send_len = write(serial_fd, cobs_packet, cobs_len+1);
+
+  // 送信失敗時
+  if (send_len <= 0)
+  {
+    // errnoによるエラー表示
+    view_send_error();
+  }
+
+  view_sent_packet(packet, send_len);
+  delete[] packet;
+  delete[] cobs_packet;
 
 }
 
@@ -1089,7 +1130,7 @@ void CugoController::serial_recv_count_MCU()
   if(serial_recv_flag == false) return;
   else serial_recv_flag = false;
 
-  // 受信データをCOBSにデコード 
+  // 受信データをCOBSにデコード
   int recv_len = decode_COBS(cobs_buf, sizeof(cobs_buf), buf);
   // std::cout << "recv_len: " << recv_len << std::endl;
   // 受信バッファがない場合
@@ -1105,7 +1146,6 @@ void CugoController::serial_recv_count_MCU()
     // エラーカウントのリセット
     recv_err_count = 0;
 
-    std::cout << "recv_len: " << recv_len << std::endl;
     uint16_t recv_checksum = read_uint16_t_from_header(buf, RECV_HEADER_CHECKSUM_PTR);
     uint16_t calc_checksum = calculate_checksum(buf, SERIAL_HEADER_SIZE+SERIAL_BUFF_SIZE, SERIAL_HEADER_SIZE);
     std::cout << "recv_checksum: " << recv_checksum << ", calc_checksum: " << calc_checksum << std::endl;
@@ -1228,6 +1268,95 @@ void CugoController::UDP_recv_base_count_MCU()
 
 void CugoController::serial_recv_base_count_MCU()
 {
+  unsigned char cobs_buf[SERIAL_HEADER_SIZE + SERIAL_BUFF_SIZE + 2];
+  unsigned char buf[SERIAL_HEADER_SIZE + SERIAL_BUFF_SIZE];
+  bool serial_recv_flag = false;
+
+  // バッファの初期化
+  memset(cobs_buf, 0x00, sizeof(cobs_buf));
+  memset(buf, 0x00, sizeof(buf));
+
+  // シリアル通信の区切りバイト0を検出し、受信パケットをcobs_bufに格納する処理
+  int bytes_read = read(serial_fd, serial_buff, sizeof(serial_buff));
+  if(bytes_read > 0)
+  {
+    for(int i=0;i<bytes_read;i++){
+      serial_msg.emplace_back(serial_buff[i]);
+      if(serial_buff[i] == 0 && serial_msg.size() >= SERIAL_HEADER_SIZE+SERIAL_BUFF_SIZE+2)
+      {
+        for(int j=0;j<SERIAL_HEADER_SIZE+SERIAL_BUFF_SIZE+2;j++)
+        {
+          unsigned char data = serial_msg.at(serial_msg.size() - (SERIAL_HEADER_SIZE+SERIAL_BUFF_SIZE+2) + j);
+          cobs_buf[j] = data;
+        }
+        serial_msg.clear();
+        serial_recv_flag = true;
+      }
+      else if(serial_msg.size() > SERIAL_HEADER_SIZE+SERIAL_BUFF_SIZE+2)
+      {
+        serial_msg.pop_front();
+      }
+    }
+  }
+
+  // 受信パケットが正常に更新されていない場合(パケット長が短い等)はreturn
+  if(serial_recv_flag == false) return;
+  else serial_recv_flag = false;
+
+  // 受信データをCOBSにデコード
+  int recv_len = decode_COBS(cobs_buf, sizeof(cobs_buf), buf);
+  // std::cout << "recv_len: " << recv_len << std::endl;
+  // 受信バッファがない場合
+  if (recv_len <= 0)
+  {
+    view_recv_error();
+  }
+  // 受信バッファがある場合
+  else
+  {
+    view_recv_packet(buf, recv_len);
+
+    // エラーカウントのリセット
+    recv_err_count = 0;
+
+    uint16_t recv_checksum = read_uint16_t_from_header(buf, RECV_HEADER_CHECKSUM_PTR);
+    uint16_t calc_checksum = calculate_checksum(buf, SERIAL_HEADER_SIZE+SERIAL_BUFF_SIZE, SERIAL_HEADER_SIZE);
+    // 異常時のフロー
+    if (recv_checksum != calc_checksum)
+    {
+      RCLCPP_ERROR(this->get_logger(), "Packet integrity check failed");
+    }
+    // 正常時のフロー
+    else
+    {
+      // エラーカウントのリセット
+      checksum_err_count = 0;
+
+      // ベクトル計算用の時間を計測
+      last_recv_time = recv_time;
+      recv_time = this->get_clock()->now();
+      // UDPの一往復の時間を測定
+      //std::cout << "UDP time:" << (recv_time - UDP_send_time).seconds() << std::endl;
+
+      // エンコーダ値の読み出し
+      recv_encoder_l = read_float_from_buf(buf, RECV_ENCODER_L_PTR);
+      recv_encoder_r = read_float_from_buf(buf, RECV_ENCODER_R_PTR);
+
+      // 故障代替値の更新
+      alt_recv_encoder_l = recv_encoder_l;
+      alt_recv_encoder_r = recv_encoder_r;
+
+      // mainループで使っている受信関数(recv_count_MCU)と異なる部分
+      // ノード起動時のlast_recv_encoder_l/rの初期値は0となっており、
+      // マイコンから受信するエンコーダ値が大きい場合、オドメトリのTwistが吹っ飛ぶ可能性がある。
+      // これを防ぐために、ここで受信したエンコーダ値を基準値として変数を更新している。
+      last_recv_encoder_l = recv_encoder_l;
+      last_recv_encoder_r = recv_encoder_r;
+      encoder_first_recv_flag = true;
+
+      view_read_data();
+    }
+  }
 
 }
 
@@ -1272,7 +1401,7 @@ int main(int argc, char * argv[])
   try
   {
     node->init_communication();
-    node->recv_base_count_MCU();
+    node->recv_base_encoder_count();
 
     while (rclcpp::ok())
     {
