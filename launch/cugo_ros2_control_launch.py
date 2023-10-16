@@ -28,8 +28,8 @@ def generate_launch_description():
     odom_child_frame_id            = LaunchConfiguration('odom_child_frame_id'           ,default='base_link')
     abnormal_translation_acc_limit = LaunchConfiguration('abnormal_translation_acc_limit',default=10.0)           # [m/s^2], default 1.0[m] translation for dt(0.1[s])
     abnormal_angular_acc_limit     = LaunchConfiguration('abnormal_angular_acc_limit'    ,default=10.0*math.pi/4) # [rad/s^2], default pi/6[rad] rotation for dt(0.1[s])
-    # TODO: パラメータを変更してもトピック名が変わらないので修正
-    odom_topic                     = LaunchConfiguration('odom_topic_name'               ,default='odom')
+    odom_topic                     = LaunchConfiguration('odom_topic_name'               ,default='/odom_test')
+    twist_topic                    = LaunchConfiguration('twist_topic_name'              ,default='/cmd_vel_test')
 
     pose_covariance                = LaunchConfiguration('pose_covariance'               ,default='[0.001, 0.001, 1000000.0, 1000000.0, 1000000.0, 1.0]')
     twist_covariance               = LaunchConfiguration('twist_covariance'              ,default='[0.001, 0.001, 1000000.0, 1000000.0, 1000000.0, 1.0]')
@@ -57,6 +57,7 @@ def generate_launch_description():
         DeclareLaunchArgument('abnormal_translation_acc_limit',default_value=abnormal_translation_acc_limit),
         DeclareLaunchArgument('abnormal_angular_acc_limit'    ,default_value=abnormal_angular_acc_limit),
         DeclareLaunchArgument('odom_topic_name'               ,default_value=odom_topic),
+        DeclareLaunchArgument('twist_topic_name'              ,default_value=twist_topic),
         DeclareLaunchArgument('pose_covariance'               ,default_value=pose_covariance),
         DeclareLaunchArgument('twist_covariance'              ,default_value=twist_covariance),
         
@@ -89,10 +90,10 @@ def generate_launch_description():
                 {'abnormal_translation_acc_limit': abnormal_translation_acc_limit},
                 {'abnormal_angular_acc_limit'    : abnormal_angular_acc_limit},
                 {'pose_covariance'               : pose_covariance},
-                {'twist_covariance'              : twist_covariance}
+                {'twist_covariance'              : twist_covariance},
+                {'odom_topic_name'               : odom_topic},
+                {'twist_topic_name'              : twist_topic},
+
             ],
-            remappings = [
-                ('odom',odom_topic),
-            ]
         ),
     ])
