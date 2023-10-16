@@ -3,5 +3,14 @@ gnss_odom_publisher:
     publish_topic_name: odometry/gps        # subscribeするトピック名
     subscribe_topic_name: odometry/gps/raw  # publishするトピック名
     frame_id: map                           # publishするトピックのframe_id
-    pose_covariance_magnification: 0.7      # pose position covarianceの倍率
-    distance_threshold: 0.06                # 前回からの移動量。この設定値以下の移動量だった場合、pose yaw covarianceは問答無用で2pi^2となる
+    pose_covariance_magnification: 0.1      # pose position covarianceの倍率
+    distance_threshold: 0.1                 # 前回からの移動量。この設定値以下の移動量だった場合、pose yaw covarianceは問答無用で2pi^2となる
+    # Wheel odometry 追加分
+    wheel_odom_topic_name: cugo_ros2_control/wheel/odometry   # subscribeするホイールオドメトリの名前
+    twist_x_thresh: 0.3                     # GNSS Orientationを棄却するホイールオドメトリx速度の閾値
+    disable_back: true                      # ホイールオドメトリでバックを検出した際にGNSS orientationを棄却する
+    back_speed_thresh: 0.01                 # バックをしたと判定するTwistの閾値
+    covariance_in_fault: 100000.0           # GNSS orientationを棄却する際のcovariance
+    wheel_odom_timeout: 1.0                 # ホイールオドメトリのタイムアウト(秒)
+    use_twist_yaw_thresh: false             # 角速度が遅い際にgps orientationのcovarianceを大きくする機能を有効化するか選択
+    twist_yaw_thresh: 0.01                  # 角速度が遅いと判定する角速度の閾値
