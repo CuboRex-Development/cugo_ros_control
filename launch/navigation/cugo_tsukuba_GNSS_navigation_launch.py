@@ -30,7 +30,7 @@ def generate_launch_description():
                     executable='rviz2',
                     name='rviz2',
                     arguments=['-d', rviz_config_dir],
-                    parameters=[{'use_sim_time': 'false'}],
+                    parameters=[{'use_sim_time': 'true'}],
                     output='screen'
                 ),
                 
@@ -39,7 +39,7 @@ def generate_launch_description():
                 IncludeLaunchDescription(
                     PythonLaunchDescriptionSource(os.path.join(launch_dir, 'gnss_localization/gnss_localization_launch.py')),
                     launch_arguments={
-                        'use_sim_time'     :'false'                  ,
+                        'use_sim_time'     :'true'                  ,
                         'imu_topic'        :'imu'                    ,
                         'gps_topic'        :'fix'                    ,
                         # 'global_odom_topic':'odometry/global'        ,
@@ -73,12 +73,12 @@ def generate_launch_description():
                     launch_arguments={
                         'wheel_radius_l'      : '0.03880',
                         'wheel_radius_r'      : '0.03858',
-                        'tread'               : '0.474',
+                        'tread'               : '0.470',
                         'odom_topic_name'     : 'cugo_ros2_control/wheel/odometry',
                         'odom_frame_id'       : 'odom',
                         'odom_child_frame_id' : 'base_link',
                         'pose_covariance'     : '[0.001, 0.001, 1000000.0, 1000000.0, 1000000.0, 1.0]',
-                        'twist_covariance'    : '[0.001, 0.001, 1000000.0, 1000000.0, 1000000.0, 0.01]'
+                        'twist_covariance'    : '[0.001, 0.001, 1000000.0, 1000000.0, 1000000.0, 0.001]'
                     }.items()
                 )
         ])
