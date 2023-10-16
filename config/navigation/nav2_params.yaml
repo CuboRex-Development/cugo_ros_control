@@ -92,7 +92,8 @@ controller_server:
     controller_frequency: 20.0
     min_x_velocity_threshold: 0.001
     min_y_velocity_threshold: 0.5
-    min_theta_velocity_threshold: 0.001
+    min_x_velocity_threshold: 0.2
+    # min_theta_velocity_threshold: 0.001
     progress_checker_plugin: "progress_checker"
     goal_checker_plugin: "goal_checker"
     controller_plugins: ["FollowPath"]
@@ -102,7 +103,8 @@ controller_server:
     progress_checker:
       plugin: "nav2_controller::SimpleProgressChecker"
       required_movement_radius: 0.5
-      movement_time_allowance: 10.0
+      movement_time_allowance: 30.0
+      # movement_time_allowance: 10.0
     # Goal checker parameters
     goal_checker:
       plugin: "nav2_controller::SimpleGoalChecker"
@@ -116,30 +118,60 @@ controller_server:
     # RPP Parameters
     FollowPath:
       plugin: "nav2_regulated_pure_pursuit_controller::RegulatedPurePursuitController"
-      desired_linear_vel: 0.8
-      lookahead_dist: 0.6
-      min_lookahead_dist: 0.2
-      max_lookahead_dist: 0.9
-      lookahead_time: 1.5
-      rotate_to_heading_angular_vel: 0.9
-      transform_tolerance: 0.05
-      use_velocity_scaled_lookahead_dist: false
-      min_approach_linear_velocity: 0.4
-      approach_velocity_scaling_dist: 0.6
-      use_collision_detection: true
-      max_allowed_time_to_collision_up_to_carrot: 2.0
+      # --- speed ------------------------------------------------------
+      # desired_linear_vel: 0.4
+      desired_linear_vel: 0.45
+      # min_approach_linear_velocity: 0.1
+      min_approach_linear_velocity: 0.3
+      # approach_velocity_scaling_dist: 0.6
+      approach_velocity_scaling_dist: 0.4
+      # --- speed scaling in curvature ------------------------------------------------------
       use_regulated_linear_velocity_scaling: true
-      use_fixed_curvature_lookahead: false
-      curvature_lookahead_dist: 0.25
-      use_cost_regulated_linear_velocity_scaling: false
-      regulated_linear_scaling_min_radius: 0.1
-      regulated_linear_scaling_min_speed: 0.6
+      # use_cost_regulated_linear_velocity_scaling: false
+      use_cost_regulated_linear_velocity_scaling: true
+      regulated_linear_scaling_min_radius: 0.5
+      regulated_linear_scaling_min_speed: 0.1
+      # --- rotation ------------------------------------------------------
       use_rotate_to_heading: true
+      # rotate_to_heading_min_angle: 0.785
+      rotate_to_heading_min_angle: 1.57
+      # rotate_to_heading_min_angle: 1.03
+      # rotate_to_heading_min_angle: 3.14
+      # rotate_to_heading_angular_vel: 2.5
+      # rotate_to_heading_angular_vel: 1.57
+      rotate_to_heading_angular_vel: 1.5
+      # rotate_to_heading_angular_vel: 0.7
+      # rotate_to_heading_angular_vel: 0.4
+      # rotate_to_heading_angular_vel: 0.05
+      # max_angular_accel: 3.2
+      # max_angular_accel: 45.0
+      # max_angular_accel: 15.0
+      max_angular_accel: 1000.0
+      # --- lookahead point ------------------------------------------------------
+      use_velocity_scaled_lookahead_dist: false
+      #   --- use_velocity_scaled_lookahead_dist == false
+      # lookahead_dist: 0.6
+      lookahead_dist: 1.2
+      #   --- use_velocity_scaled_lookahead_dist == true
+      # min_lookahead_dist: 0.2
+      # max_lookahead_dist: 1.5
+      # lookahead_time: 2.0
+      #   --- velocity scaling in curvature
+      use_fixed_curvature_lookahead: true
+      curvature_lookahead_dist: 0.1
+      # --- reversing ------------------------------------------------------
       allow_reversing: false
-      rotate_to_heading_min_angle: 0.785
-      max_angular_accel: 5.0
-      max_robot_pose_search_dist: 10.0
+      # --- positioning ------------------------------------------------------
+      transform_tolerance: 0.2
+      # --- collision detection ------------------------------------------------------
+      use_collision_detection: true
+      # max_allowed_time_to_collision_up_to_carrot: 5.0
+      # max_allowed_time_to_collision: 1.0
+      # --- others ------------------------------------------------------
+      max_robot_pose_search_dist: 8.0
+      # max_robot_pose_search_dist: 10.0
       use_interpolation: false
+      # use_interpolation: true
     # DWB parameters
     # FollowPath:
     #   plugin: "dwb_core::DWBLocalPlanner"
@@ -190,8 +222,8 @@ controller_server_rclcpp_node:
 local_costmap:
   local_costmap:
     ros__parameters:
-      update_frequency: 2.0 # 5.0
-      publish_frequency: 1.0 # 2.0
+      update_frequency: 5.0 # 5.0
+      publish_frequency: 3.0 # 2.0
       global_frame: odom
       robot_base_frame: base_link
       use_sim_time: true
@@ -199,13 +231,13 @@ local_costmap:
       width: 16 # 3
       height: 16 # 3
       resolution: 0.05
-      robot_radius: 0.22
+      robot_radius: 0.55 # 0.22
       plugins: ["voxel_layer", "inflation_layer"]
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        cost_scaling_factor: 0.2
+        # cost_scaling_factor: 0.2
         inflation_radius: 0.1
-        # cost_scaling_factor: 3.0
+        cost_scaling_factor: 3.0
         # inflation_radius: 0.55
       voxel_layer:
         plugin: "nav2_costmap_2d::VoxelLayer"
