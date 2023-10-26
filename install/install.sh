@@ -42,6 +42,7 @@ sudo apt install -y python3-osrf-pycommon python3-catkin-tools
 sudo apt install -y google-mock
 sudo apt install -y libgmock-dev
 sudo apt install -y libceres-dev
+sudo apt install -y lua5.2 liblua5.2-dev libluabind-dev
 cd ../
 wstool init src
 wstool merge -t src https://raw.githubusercontent.com/cartographer-project/cartographer_ros/master/cartographer_ros.rosinstall
