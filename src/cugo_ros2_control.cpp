@@ -3,13 +3,11 @@
 CugoController::CugoController()
 : Node("cugo_ros2_control"), loop_rate(10)
 {
-  odom_pub_ = this->create_publisher<nav_msgs::msg::Odometry>("/odom", 10);
-  cmd_vel_sub_ = this->create_subscription<geometry_msgs::msg::Twist>(
-      "/cmd_vel", 10, std::bind(&CugoController::cmd_vel_callback, this, _1));
-
-  // Initialize the transform broadcaster
+   // Initialize the transform broadcaster
   tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
 
+  std::string twist_topic_name_;
+  std::string odom_topic_name_;
 
   // パラメータ読み込み
   this->declare_parameter("ODOMETRY_DISPLAY", true);
@@ -60,8 +58,19 @@ CugoController::CugoController()
   this->declare_parameter("twist_covariance",std::vector<double> (6,0.0));
   twist_covariance = this->get_parameter("twist_covariance").as_double_array();
 
+  this->declare_parameter("odom_topic_name",std::string("/odom"));
+  this->get_parameter("odom_topic_name", odom_topic_name_);
+
+  this->declare_parameter("twist_topic_name",std::string("/cmd_vel"));
+  this->get_parameter("twist_topic_name", twist_topic_name_);
+
   view_parameters();
-  //view_init();
+
+  odom_pub_ = this->create_publisher<nav_msgs::msg::Odometry>(odom_topic_name_, 10);
+  cmd_vel_sub_ = this->create_subscription<geometry_msgs::msg::Twist>(
+      twist_topic_name_, 10, std::bind(&CugoController::cmd_vel_callback, this, _1));
+
+//view_init();
 }
 
 CugoController::~CugoController()
