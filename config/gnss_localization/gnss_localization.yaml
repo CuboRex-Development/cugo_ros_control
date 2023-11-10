@@ -103,4 +103,7 @@ navsat_transform:
     use_odometry_yaw: false
     wait_for_datum: true
     # datun: [your_latitude, your_longitude,your_yaw]
-    datum: [ 36.0826686 ,140.0775115, 0.0]
+    # つくばチャレンジの原点
+    # datum: [ 36.0826686 ,140.0775115, 0.0]
+    # かがやきチャレンジの原点
+    datum: [ 35.72514598638518, 139.8682489998428, 0.0]

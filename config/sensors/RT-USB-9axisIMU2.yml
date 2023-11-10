@@ -2,7 +2,7 @@ imu_rt:
   ros__parameters:
     frame_id: "imu"
     port: "/dev/ttyACM0"
-    linear_acceleration_stddev: 20.0
+    linear_acceleration_stddev: 1.0
     angular_velocity_stddev: 0.1
     # magnetic_field_stddev: 0.00000080786
 

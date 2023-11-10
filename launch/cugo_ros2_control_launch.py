@@ -6,6 +6,18 @@ from launch_ros.actions import Node
 
 import math
 
+
+                #     launch_arguments={
+                #         'wheel_radius_l'      : '0.03880',
+                #         'wheel_radius_r'      : '0.03858',
+                #         'tread'               : '0.470',
+                #         'odom_topic_name'     : 'cugo_ros2_control/wheel/odometry',
+                #         'odom_frame_id'       : 'odom',
+                #         'odom_child_frame_id' : 'base_link',
+                #         'pose_covariance'     : '[0.001, 0.001, 1000000.0, 1000000.0, 1000000.0, 1.0]',
+                #         'twist_covariance'    : '[0.001, 0.001, 1000000.0, 1000000.0, 1000000.0, 0.001]'
+
+
 def generate_launch_description():
     # Parameters
     ODOMETRY_DISPLAY               = LaunchConfiguration('ODOMETRY_DISPLAY'              ,default=True)
@@ -15,9 +27,9 @@ def generate_launch_description():
     RECV_PACKET_DISPLAY            = LaunchConfiguration('RECV_PACKET_DISPLAY'           ,default=True)
     READ_DATA_DISPLAY              = LaunchConfiguration('READ_DATA_DISPLAY'             ,default=True)
     timeout                        = LaunchConfiguration('timeout'                       ,default=0.05)
-    wheel_radius_l                 = LaunchConfiguration('wheel_radius_l'                ,default=0.03858)# default: CuGO V3
+    wheel_radius_l                 = LaunchConfiguration('wheel_radius_l'                ,default=0.03890)# default: CuGO V3
     wheel_radius_r                 = LaunchConfiguration('wheel_radius_r'                ,default=0.03858)# default: CuGO V3
-    tread                          = LaunchConfiguration('tread'                         ,default=0.460)  # default: CuGO V3
+    tread                          = LaunchConfiguration('tread'                         ,default=0.481)  # default: CuGO V3
     reduction_ratio                = LaunchConfiguration('reduction_ratio'               ,default=1.0)
     encoder_max                    = LaunchConfiguration('encoder_max'                   ,default=2147483647) # -2147483648 ~ 2147483647(Arduinoのlong intは32bit)
     encoder_resolution             = LaunchConfiguration("encoder_resolution"            ,default=2048)
