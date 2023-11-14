@@ -815,7 +815,28 @@ void CugoController::recv_count_MCU()
   memset(buf, 0x00, sizeof(buf));
 
   // 受信
+  /*
   int recv_len = recv(sock, buf, sizeof(buf), 0);
+  int bytesAvailable;
+  ioctl(sock, FIONREAD, &bytesAvailable);
+  RCLCPP_INFO(this->get_logger(), "UDP receive : %d bytes./ available buffer : %d.",recv_len,bytesAvailable);
+  */
+
+  // 仮：バッファが72以下になるまで受信し続ける
+  int recv_len, bytesAvailable;
+  int  read_count = 0;
+  bool readable    = true;
+  while(readable){
+    read_count++;
+    recv_len = recv(sock, buf, sizeof(buf), 0);
+    ioctl(sock, FIONREAD, &bytesAvailable);
+    readable = (bytesAvailable >= 72);
+  }
+  if(read_count > 1){
+    RCLCPP_WARN(this->get_logger(), "UDP read buffer : %d times.",read_count);
+  }
+  //
+
   // std::cout << "recv_len: " << recv_len << std::endl;
   // 受信バッファがない場合
   if (recv_len <= 0)
@@ -875,8 +896,29 @@ void CugoController::recv_base_count_MCU()
   memset(buf, 0x00, sizeof(buf));
 
   // 受信
+  /*
   int recv_len = recv(sock, buf, sizeof(buf), 0);
+  int bytesAvailable;
+  ioctl(sock, FIONREAD, &bytesAvailable);
+  RCLCPP_INFO(this->get_logger(), "UDP receive : %d bytes./ available buffer : %d.",recv_len,bytesAvailable);
   // std::cout << "recv_len: " << recv_len << std::endl;
+  */
+
+  // 仮：バッファが72以下になるまで受信し続ける
+  int recv_len, bytesAvailable;
+  int  read_count = 0;
+  bool readable    = true;
+  while(readable){
+    read_count++;
+    recv_len = recv(sock, buf, sizeof(buf), 0);
+    ioctl(sock, FIONREAD, &bytesAvailable);
+    readable = (bytesAvailable >= 72);
+  }
+  if(read_count > 1){
+    RCLCPP_WARN(this->get_logger(), "UDP read buffer : %d times.",read_count);
+  }
+  //
+
   // 受信バッファがない場合
   if (recv_len <= 0)
   {
