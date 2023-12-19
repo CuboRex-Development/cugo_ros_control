@@ -29,7 +29,8 @@ amcl:
     robot_model_type: "differential"
     save_pose_rate: 0.5
     sigma_hit: 0.2
-    tf_broadcast: true
+    # tf_broadcast: true
+    tf_broadcast: false
     transform_tolerance: 1.0
     update_min_a: 0.2
     update_min_d: 0.25
@@ -109,10 +110,10 @@ controller_server:
     goal_checker:
       plugin: "nav2_controller::SimpleGoalChecker"
       # xy_goal_tolerance: 9999.9
-      xy_goal_tolerance: 2.0
+      xy_goal_tolerance: 1.0
       stateful: True
-      yaw_goal_tolerance: 1.57
-      # yaw_goal_tolerance: 3.14
+      # yaw_goal_tolerance: 1.57
+      yaw_goal_tolerance: 3.14
     # RPP Parameters
     FollowPath:
       plugin: "nav2_regulated_pure_pursuit_controller::RegulatedPurePursuitController"

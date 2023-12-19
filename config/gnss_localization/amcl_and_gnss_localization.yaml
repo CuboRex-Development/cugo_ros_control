@@ -42,6 +42,17 @@ ekf_map:
     odom1_differential: false
     odom1_relative: false
 
+    odom2: odometry/amcl
+    odom2_config: [true , true , false,
+                   false, false, true ,
+                   false, false, false,
+                   false, false, false,
+                   false, false, false]
+    odom2_queue_size: 1
+    odom2_nodelay: false
+    odom2_differential: false
+    odom2_relative: false
+
     imu0: imu
     imu0_config: [false, false, false,
                   false, false, false,
@@ -103,7 +114,6 @@ navsat_transform:
     use_odometry_yaw: false
     wait_for_datum: true
     # datun: [your_latitude, your_longitude,your_yaw]
-    # つくばチャレンジの原点
-    # datum: [ 36.0826686 ,140.0775115, 0.0]
-    # かがやきチャレンジの原点
-    datum: [ 35.72514598638518, 139.8682489998428, 0.0]
+    datum: [ 36.0826686 ,140.0775115, 0.0]
+    # datum in kagayki　
+    # datum: [ 35.72514598638518, 139.8682489998428, 0.0]

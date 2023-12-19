@@ -430,12 +430,8 @@ void CugoController::view_send_error()
   }
   else if (errsv == ENOBUFS)
   {
-    perror("ENOBUFFS");
-    RCLCPP_ERROR(this->get_logger(), "send_err ENOBUFS, errno: %i", errsv);
-  }
-  else if (errsv == ENOMEM)
-  {
-    perror("ENOMEM");
+    perror("ENOBUFFS");  if (checksum_err_count > 5)
+
     RCLCPP_ERROR(this->get_logger(), "send_err ENOMEM, errno: %i", errsv);
   }
   else if (errsv == ENOTCONN)
@@ -747,6 +743,15 @@ void CugoController::check_communication()
   recv_err_count++;
   checksum_err_count++;
   diff_err_count++;
+
+  if (recv_err_count > 1)
+  {
+    RCLCPP_WARN(this->get_logger(), "UDP recv warn: Could not receive packet : no rcv : %d / checksum : %d ",recv_err_count,checksum_err_count);
+  }else if(checksum_err_count > 1){
+    RCLCPP_WARN(this->get_logger(), "UDP recv warn: Packet integrity check failed : no rcv : %d / checksum : %d ",recv_err_count,checksum_err_count);
+  }
+
+
   // エラーが一定回数連続して確認された場合、故障代替値を格納する
   // パケットの受信がなかった場合
   if (recv_err_count > 5)
@@ -755,18 +760,21 @@ void CugoController::check_communication()
     vector_omega = 0.0;
     recv_encoder_l = alt_recv_encoder_l;
     recv_encoder_r = alt_recv_encoder_r;
-    RCLCPP_ERROR(this->get_logger(), "UDP recv error: Could not receive packet");
+    // RCLCPP_ERROR(this->get_logger(), "UDP recv error: Could not receive packet");
+    RCLCPP_ERROR(this->get_logger(), "UDP recv error: Could not receive packet : no rcv : %d / checksum : %d ",recv_err_count,checksum_err_count);
     // エラーカウントのリセット
     recv_err_count = 0;
   }
   // 受信時にチェックサムが一致しなかった場合
-  if (checksum_err_count > 5)
+  else if (checksum_err_count > 5)
+  // if (checksum_err_count > 5)
   {
     vector_v = 0.0;
     vector_omega = 0.0;
     recv_encoder_l = alt_recv_encoder_l;
     recv_encoder_r = alt_recv_encoder_r;
-    RCLCPP_ERROR(this->get_logger(), "UDP recv error: Packet integrity check failed");
+    // RCLCPP_ERROR(this->get_logger(), "UDP recv error: Packet integrity check failed");
+    RCLCPP_ERROR(this->get_logger(), "UDP recv error: Packet integrity check failed : no rcv : %d / checksum : %d ",recv_err_count,checksum_err_count);
     // エラーカウントのリセット
     checksum_err_count = 0;
   }
@@ -807,7 +815,28 @@ void CugoController::recv_count_MCU()
   memset(buf, 0x00, sizeof(buf));
 
   // 受信
+  /*
   int recv_len = recv(sock, buf, sizeof(buf), 0);
+  int bytesAvailable;
+  ioctl(sock, FIONREAD, &bytesAvailable);
+  RCLCPP_INFO(this->get_logger(), "UDP receive : %d bytes./ available buffer : %d.",recv_len,bytesAvailable);
+  */
+
+  // 仮：バッファが72以下になるまで受信し続ける
+  int recv_len, bytesAvailable;
+  int  read_count = 0;
+  bool readable    = true;
+  while(readable){
+    read_count++;
+    recv_len = recv(sock, buf, sizeof(buf), 0);
+    ioctl(sock, FIONREAD, &bytesAvailable);
+    readable = (bytesAvailable >= 72);
+  }
+  if(read_count > 1){
+    RCLCPP_WARN(this->get_logger(), "UDP read buffer : %d times.",read_count);
+  }
+  //
+
   // std::cout << "recv_len: " << recv_len << std::endl;
   // 受信バッファがない場合
   if (recv_len <= 0)
@@ -867,8 +896,29 @@ void CugoController::recv_base_count_MCU()
   memset(buf, 0x00, sizeof(buf));
 
   // 受信
+  /*
   int recv_len = recv(sock, buf, sizeof(buf), 0);
+  int bytesAvailable;
+  ioctl(sock, FIONREAD, &bytesAvailable);
+  RCLCPP_INFO(this->get_logger(), "UDP receive : %d bytes./ available buffer : %d.",recv_len,bytesAvailable);
   // std::cout << "recv_len: " << recv_len << std::endl;
+  */
+
+  // 仮：バッファが72以下になるまで受信し続ける
+  int recv_len, bytesAvailable;
+  int  read_count = 0;
+  bool readable    = true;
+  while(readable){
+    read_count++;
+    recv_len = recv(sock, buf, sizeof(buf), 0);
+    ioctl(sock, FIONREAD, &bytesAvailable);
+    readable = (bytesAvailable >= 72);
+  }
+  if(read_count > 1){
+    RCLCPP_WARN(this->get_logger(), "UDP read buffer : %d times.",read_count);
+  }
+  //
+
   // 受信バッファがない場合
   if (recv_len <= 0)
   {

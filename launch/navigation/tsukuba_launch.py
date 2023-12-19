@@ -37,7 +37,7 @@ def generate_launch_description():
                                 
                 # gps odometry ekf 
                 IncludeLaunchDescription(
-                    PythonLaunchDescriptionSource(os.path.join(launch_dir, 'gnss_localization/gnss_localization_launch.py')),
+                    PythonLaunchDescriptionSource(os.path.join(launch_dir, 'gnss_localization/amcl_and_gnss_localization_launch.py')),
                     launch_arguments={
                         'use_sim_time'     :'true'                  ,
                         'imu_topic'        :'imu'                    ,
@@ -45,7 +45,7 @@ def generate_launch_description():
                         # 'global_odom_topic':'odometry/global'        ,
                         'global_odom_topic':'odom'                   ,
                         'wheel_odom_topic' :'cugo_ros2_control/wheel/odometry'         ,
-                        'ekf_conf_file'    :'config/gnss_localization/gnss_localization.yaml'
+                        'ekf_conf_file'    :'config/gnss_localization/amcl_and_gnss_localization.yaml'
                     }.items()
                 ),
                 
@@ -63,9 +63,10 @@ def generate_launch_description():
                     }.items()
                 ),
                 IncludeLaunchDescription(
-                    PythonLaunchDescriptionSource(os.path.join(launch_dir, 'navigation/GNSS_navigation_launch.py')),
+                    PythonLaunchDescriptionSource(os.path.join(launch_dir, 'navigation/bringup_launch.py')),
                     launch_arguments={
-                        'map'               :os.path.join(pkg_share, 'map', 'map_white.yaml')
+                        'map'               :os.path.join(pkg_share, 'map', 'map.yaml'),
+                        'params_file'       :os.path.join(pkg_share, 'config', 'navigation', 'nav2_tsukuba_params.yaml')
                     }.items()
                 ),
                 IncludeLaunchDescription(
@@ -76,7 +77,7 @@ def generate_launch_description():
                         'wheel_radius_r'      : '0.03858',
                         # 'tread'               : '0.470',
                         'tread'               : '0.481',
-                        'odom_topic_name'     : 'cugo_ros2_control/wheel/odometry',
+                        'odom_topic_name'     : 'wheel/odometry',
                         'odom_frame_id'       : 'odom',
                         'odom_child_frame_id' : 'base_link',
                         'twist_topic_name'    : 'cmd_vel_filtered',
