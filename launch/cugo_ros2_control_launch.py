@@ -41,7 +41,7 @@ def generate_launch_description():
     abnormal_translation_acc_limit = LaunchConfiguration('abnormal_translation_acc_limit',default=10.0)           # [m/s^2], default 1.0[m] translation for dt(0.1[s])
     abnormal_angular_acc_limit     = LaunchConfiguration('abnormal_angular_acc_limit'    ,default=10.0*math.pi/4) # [rad/s^2], default pi/6[rad] rotation for dt(0.1[s])
     odom_topic                     = LaunchConfiguration('odom_topic_name'               ,default='/odom_test')
-    twist_topic                    = LaunchConfiguration('twist_topic_name'              ,default='/cmd_vel_test')
+    twist_topic                    = LaunchConfiguration('twist_topic_name'              ,default='cmd_vel_filtered')
 
     pose_covariance                = LaunchConfiguration('pose_covariance'               ,default='[0.001, 0.001, 1000000.0, 1000000.0, 1000000.0, 1.0]')
     twist_covariance               = LaunchConfiguration('twist_covariance'              ,default='[0.001, 0.001, 1000000.0, 1000000.0, 1000000.0, 1.0]')
