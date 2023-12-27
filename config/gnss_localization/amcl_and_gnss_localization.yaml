@@ -2,7 +2,7 @@ ekf_map:
   ros__parameters:
     use_sim_time: true
 
-    frequency: 20.0
+    frequency: 10.0
     sensor_timeout: 0.2
     two_d_mode: true
     transform_time_offset: 0.0
