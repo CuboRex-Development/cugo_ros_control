@@ -26,6 +26,7 @@ find_package(geometry_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
 
 add_executable(cugo_ros2_control src/cugo_ros2_control.cpp)
 ament_target_dependencies(cugo_ros2_control
@@ -35,6 +36,7 @@ ament_target_dependencies(cugo_ros2_control
   nav_msgs
   tf2
   tf2_ros
+  tf2_geometry_msgs
 )
 target_include_directories(cugo_ros2_control PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

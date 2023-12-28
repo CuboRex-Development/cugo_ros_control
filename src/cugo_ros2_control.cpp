@@ -1423,10 +1423,12 @@ int main(int argc, char * argv[])
     RCLCPP_ERROR(node->get_logger(), "unexpectedly failed with %s ", e.what());
     rclcpp::shutdown();
   }
+  
   catch (const std::exception &e)
   {
     RCLCPP_ERROR(node->get_logger(), "std::exception error occured: %s ", e.what());
     rclcpp::shutdown();
   }
+  
   return 0;
 }
