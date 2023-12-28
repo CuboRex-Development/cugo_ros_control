@@ -45,6 +45,10 @@ $ source ~/your/ros_workspace/ros2_ws/install/local_setup.bash
 $ ros2 launch cugo_ros2_control cugo_ros2_control_launch.py
 ~~~
 
+出力先は２通りあります。ROS開発キット CuGo V3の場合はUDP通信、クローラロボット開発プラットフォーム V4/V3iのRaspberry Pi PicoのUSB micro Bを利用する場合は、USB Serial通信を行います。
+Launchファイルの以下の場所で出力先を変えられますので、comm_typeの値を'UDP'もしくは'USB'に変更してご利用ください。
+https://github.com/CuboRex-Development/cugo_ros_control/blob/2cdd2e8254a2a2fac73face12e7c4d7f2ac837fd/launch/bringup/cugo_ros2_control_launch.py#L37-L39
+
 ### ros2 runを用いた起動方法
 
 次のコマンドで起動します。
