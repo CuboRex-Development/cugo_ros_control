@@ -26,6 +26,8 @@ Arduinoとの通信はUDP通信にて実現します。ロボット内のEdgeル
 # Installation
 ROS 2環境がない場合は[ROS 2 Documentation](https://docs.ros.org/en/foxy/Installation/Ubuntu-Install-Debians.html)を参照しROS 2をインストールしてください。
 
+IMUのデータ取得に使用している[witmotion_IMU_ros](https://github.com/ElettraSciComp/witmotion_IMU_ros/tree/ros2)のbuildにはver3.19以上のCMakeが必要です。バージョンが低い場合は、[Installing CMake](https://cmake.org/install/)を参考にCMakeをインストールしてください。
+
 ROS 2のワークスペース内でgit cloneしたのち、colcon buildしてください。
 ~~~
 $ cd ~/your/ros_workspace/ros2_ws/src
