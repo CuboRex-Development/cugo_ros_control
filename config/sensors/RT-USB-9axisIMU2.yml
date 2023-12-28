@@ -1,0 +1,16 @@
+imu_rt:
+  ros__parameters:
+    frame_id: "imu"
+    port: "/dev/ttyACM0"
+    linear_acceleration_stddev: 20.0
+    # angular_velocity_stddev: 0.0010621
+    # magnetic_field_stddev: 0.00000080786
+
+imu_filter:
+  ros__parameters:
+    use_mag: true
+    publish_tf: false
+    reverse_tf: false
+    world_frame: "ned"
+    fixed_frame: "imu"
+    orientation_stddev: 0.0001

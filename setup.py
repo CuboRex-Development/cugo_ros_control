@@ -10,6 +10,6 @@ setup(
     version='0.0.0',
     packages=[package_name],
     data_files=[
-        (os.path.join('share', package_name), glob('launch/*_launch.py')),
+        (os.path.join('share', package_name), glob('launch/*.py')),
     ]
 )
