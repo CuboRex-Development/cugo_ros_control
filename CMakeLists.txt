@@ -43,7 +43,7 @@ target_include_directories(cugo_ros2_control PUBLIC
 install(TARGETS cugo_ros2_control
   DESTINATION lib/${PROJECT_NAME})
 
-install(DIRECTORY launch config
+install(DIRECTORY launch config map
   DESTINATION share/${PROJECT_NAME})
 
 if(BUILD_TESTING)

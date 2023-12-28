@@ -11,7 +11,7 @@ def generate_launch_description():
     ODOMETRY_DISPLAY               = LaunchConfiguration('ODOMETRY_DISPLAY'              ,default=True)
     PARAMETERS_DISPLAY             = LaunchConfiguration('PARAMETERS_DISPLAY'            ,default=False)
     TARGET_RPM_DISPLAY             = LaunchConfiguration('TARGET_RPM_DISPLAY'            ,default=True)
-    SENT_PACKET_DISPLAY            = LaunchConfiguration('SENT_PACKET_DISPLAY'           ,default=False)
+    SENT_PACKET_DISPLAY            = LaunchConfiguration('SENT_PACKET_DISPLAY'           ,default=True)
     RECV_PACKET_DISPLAY            = LaunchConfiguration('RECV_PACKET_DISPLAY'           ,default=True)
     READ_DATA_DISPLAY              = LaunchConfiguration('READ_DATA_DISPLAY'             ,default=True)
     timeout                        = LaunchConfiguration('timeout'                       ,default=0.05)
@@ -33,6 +33,10 @@ def generate_launch_description():
 
     pose_covariance                = LaunchConfiguration('pose_covariance'               ,default='[0.001, 0.001, 1000000.0, 1000000.0, 1000000.0, 1.0]')
     twist_covariance               = LaunchConfiguration('twist_covariance'              ,default='[0.001, 0.001, 1000000.0, 1000000.0, 1000000.0, 1.0]')
+
+    comm_type                      = LaunchConfiguration('comm_type'                     ,default='USB')
+    serial_port                    = LaunchConfiguration('serial_port'                   ,default='/dev/ttyACM0')
+    serial_baudrate                = LaunchConfiguration('serial_baudrate'               ,default=115200)
 
     return LaunchDescription([
         # Parameter
@@ -59,6 +63,9 @@ def generate_launch_description():
         DeclareLaunchArgument('odom_topic_name'               ,default_value=odom_topic),
         DeclareLaunchArgument('pose_covariance'               ,default_value=pose_covariance),
         DeclareLaunchArgument('twist_covariance'              ,default_value=twist_covariance),
+        DeclareLaunchArgument('comm_type'                     ,default_value=comm_type),
+        DeclareLaunchArgument('serial_port'                   ,default_value=serial_port),
+        DeclareLaunchArgument('serial_baudrate'               ,default_value=serial_baudrate),
         
         
         #Cugo 
@@ -89,7 +96,10 @@ def generate_launch_description():
                 {'abnormal_translation_acc_limit': abnormal_translation_acc_limit},
                 {'abnormal_angular_acc_limit'    : abnormal_angular_acc_limit},
                 {'pose_covariance'               : pose_covariance},
-                {'twist_covariance'              : twist_covariance}
+                {'twist_covariance'              : twist_covariance},
+                {'comm_type'                     : comm_type},
+                {'serial_port'                   : serial_port},
+                {'serial_baudrate'               : serial_baudrate}
             ],
             remappings = [
                 ('odom',odom_topic),
