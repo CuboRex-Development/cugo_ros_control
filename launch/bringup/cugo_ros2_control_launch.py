@@ -34,7 +34,9 @@ def generate_launch_description():
     pose_covariance                = LaunchConfiguration('pose_covariance'               ,default='[0.001, 0.001, 1000000.0, 1000000.0, 1000000.0, 1.0]')
     twist_covariance               = LaunchConfiguration('twist_covariance'              ,default='[0.001, 0.001, 1000000.0, 1000000.0, 1000000.0, 1.0]')
 
+    # Select "UDP or USB"
     comm_type                      = LaunchConfiguration('comm_type'                     ,default='UDP')
+    #comm_type                      = LaunchConfiguration('comm_type'                     ,default='USB')
     serial_port                    = LaunchConfiguration('serial_port'                   ,default='/dev/ttyACM0')
     serial_baudrate                = LaunchConfiguration('serial_baudrate'               ,default=115200)
 
