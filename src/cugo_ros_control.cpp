@@ -32,6 +32,24 @@ CugoController::CugoController(ros::NodeHandle nh) : loop_rate(10)
   nh.param("abnormal_translation_acc_limit", abnormal_translation_acc_limit, (float)10.0);
   nh.param("abnormal_angular_acc_limit", abnormal_angular_acc_limit, (float)(10.0*M_PI/4));
 
+  // get and check params for covariances
+  nh.getParam("pose_covariance_diagonal", pose_cov_arry);
+  ROS_ASSERT(pose_cov_arry.getType() == XmlRpc::XmlRpcValue::TypeArray);
+  ROS_ASSERT(pose_cov_arry.size() == 6);
+  for(int i = 0; i < pose_cov_arry.size(); ++i)
+  {
+    ROS_ASSERT(pose_cov_arry[i].getType() == XmlRpc::XmlRpcValue::TypeDouble);
+  }
+
+  nh.getParam("twist_covariance_diagonal", twist_cov_arry);
+  ROS_ASSERT(twist_cov_arry.getType() == XmlRpc::XmlRpcValue::TypeArray);
+  ROS_ASSERT(twist_cov_arry.size() == 6);
+  for(int i = 0; i < twist_cov_arry.size(); ++i)
+  {
+    ROS_ASSERT(twist_cov_arry[i].getType() == XmlRpc::XmlRpcValue::TypeDouble);
+  }
+
+
   view_parameters();
   //view_init();
 }
@@ -277,12 +295,26 @@ void CugoController::publish()
   odom.pose.pose.position.y = odom_y;
   odom.pose.pose.position.z = 0.0;
   odom.pose.pose.orientation = odom_quat;
+  odom.pose.covariance = {
+    static_cast<double>(pose_cov_arry[0]), 0., 0., 0., 0., 0.,
+    0., static_cast<double>(pose_cov_arry[1]), 0., 0., 0., 0.,
+    0., 0., static_cast<double>(pose_cov_arry[2]), 0., 0., 0.,
+    0., 0., 0., static_cast<double>(pose_cov_arry[3]), 0., 0.,
+    0., 0., 0., 0., static_cast<double>(pose_cov_arry[4]), 0.,
+    0., 0., 0., 0., 0., static_cast<double>(pose_cov_arry[5]) };
 
   // set the velocity
   odom.child_frame_id = odom_child_frame_id;
   odom.twist.twist.linear.x = odom_twist_x;
   odom.twist.twist.linear.y = odom_twist_y;
   odom.twist.twist.angular.z = odom_twist_yaw;
+  odom.twist.covariance = {
+    static_cast<double>(twist_cov_arry[0]), 0., 0., 0., 0., 0.,
+    0., static_cast<double>(twist_cov_arry[1]), 0., 0., 0., 0.,
+    0., 0., static_cast<double>(twist_cov_arry[2]), 0., 0., 0.,
+    0., 0., 0., static_cast<double>(twist_cov_arry[3]), 0., 0.,
+    0., 0., 0., 0., static_cast<double>(twist_cov_arry[4]), 0.,
+    0., 0., 0., 0., 0., static_cast<double>(twist_cov_arry[5]) };
 
   view_odom();
   odom_pub.publish(odom);
