@@ -19,10 +19,18 @@ ROS 2 Humbleでディレクトリ構成が変わりました。Foxyをお使い�
 - [License](#license)
 
 # Features
-[cugo_ros_motorcontroller](https://github.com/CuboRex-Development/cugo_ros_motorcontroller/tree/pico-usb)に対して、Subscribeした`/cmd_vel`の速度ベクトルになるような仮想車輪L/Rの回転数を計算します。計算した回転数をマイコンに送信します。また、[cugo_ros_motorcontroller](https://github.com/CuboRex-Development/cugo_ros_motorcontroller/tree/pico-usb)が書き込まれたマイコンからエンコーダのカウント数を受け取ります。カウント数からロボットのオドメトリを計算し、`/odom`を生成しPublishします。
+Subscribeした`/cmd_vel`の速度ベクトルになるような仮想車輪L/Rの回転数を計算します。計算した回転数をマイコンに送信します。また、[cugo_ros_motorcontroller](https://github.com/CuboRex-Development/cugo_ros_motorcontroller/tree/pico-usb)が書き込まれたマイコンからエンコーダのカウント数を受け取ります。カウント数からロボットのオドメトリを計算し、`/odom`を生成しPublishします。
+
+<img width="1142" alt="cugo_ros_control_archi" src="https://github.com/CuboRex-Development/cugo_ros_control/assets/22425319/21e0d954-87ec-436d-9f98-5f8bf35706f9">
+
 
 #### 対応製品
-CuboRex製品では、“ROS開発キット CuGo V3”、“クローラロボット開発プラットフォーム CuGo V4”、“クローラロボット開発プラットフォーム CuGo V3i”でお使いいただけます。それぞれ使用するコードが異なることがありますので、下記表からご参照ください。
+CuboRex製品では、
+* ROS開発キット CuGo V3
+* クローラロボット開発プラットフォーム CuGo V4
+* クローラロボット開発プラットフォーム CuGo V3i
+
+でお使いいただけます。それぞれ使用するコードが異なることがありますので、下記表からご参照ください。
 
 ここでは、“クローラロボット開発プラットフォーム CuGo V4”と“クローラロボット開発プラットフォーム CuGo V3i”は“クローラロボット開発プラットフォーム”と総称します。
 
@@ -30,7 +38,7 @@ CuboRex製品では、“ROS開発キット CuGo V3”、“クローラロボ�
 製品名|ROSパッケージ|マイコンスケッチ
 -----------|-----------------|-----------------------------
 ROS開発キット|このページ|[ArduinoUNO用](https://github.com/CuboRex-Development/cugo_ros_motorcontroller/tree/uno-udp)                            
-プラットフォーム|このページ|[RaspberryPiPico用](https://github.com/CuboRex-Development/cugo_ros_motorcontroller/tree/pico-usb)  
+クローラロボット開発プラットフォーム|このページ|[RaspberryPiPico用](https://github.com/CuboRex-Development/cugo_ros_motorcontroller/tree/pico-usb)  
 
 #### ROS開発キットの場合
 ご購入時点でセットアップ済みですので、そのままROSパッケージの実行をしてください。
@@ -42,8 +50,9 @@ ROS開発キット|このページ|[ArduinoUNO用](https://github.com/CuboRex-De
 スケッチの書き換えはROS PCである必要性はありません。
 
 #### クローラロボット開発プラットフォームの場合
-付属のRaspberryPiPicoと通信します。ROS PCとRaspberryPiPicoをUSBケーブルで接続してください。
-付属のRaspberryPiPicoに[こちらのスケッチ](https://github.com/CuboRex-Development/cugo_ros_motorcontroller/tree/pico-usb)を書き込み、ROSパッケージを実行してください。自動で通信開始します。
+付属のRaspberryPiPicoと通信します。
+付属のRaspberryPiPicoに[こちらのスケッチ](https://github.com/CuboRex-Development/cugo_ros_motorcontroller/tree/pico-usb)を書き込み、ROS PCとRaspberryPiPicoをUSBケーブルで接続してください。
+その後ROSパッケージを実行してください。自動で通信開始します。
 
 
 スケッチの書き換えはROS PCである必要性はありません。
