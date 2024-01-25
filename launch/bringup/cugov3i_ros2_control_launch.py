@@ -20,7 +20,7 @@ def generate_launch_description():
     tread                          = LaunchConfiguration('tread'                         ,default=0.380)  # default: CuGO V4
     reduction_ratio                = LaunchConfiguration('reduction_ratio'               ,default=15.0)
     encoder_max                    = LaunchConfiguration('encoder_max'                   ,default=2147483647) # -2147483648 ~ 2147483647(Arduinoのlong intは32bit)
-    encoder_resolution             = LaunchConfiguration("encoder_resolution"            ,default=24.0)
+    encoder_resolution             = LaunchConfiguration('encoder_resolution'            ,default=24)
     arduino_addr                   = LaunchConfiguration('arduino_addr'                  ,default='192.168.11.216')
     arduino_port                   = LaunchConfiguration('arduino_port'                  ,default=8888)
     source_port                    = LaunchConfiguration('source_port'                   ,default=8888)
