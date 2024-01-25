@@ -17,6 +17,6 @@ def generate_launch_description():
             PythonLaunchDescriptionSource(os.path.join(launch_dir, 'sensors/sensors_bringup_launch.py')),
         ),
         IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(os.path.join(launch_dir, 'cugo_ros2_control_launch.py')),
+            PythonLaunchDescriptionSource(os.path.join(launch_dir, 'cugov3_ros2_control_launch.py')),
         )
     ])
