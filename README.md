@@ -4,8 +4,13 @@
 
 ROS開発キット/クローラロボット開発プラットフォームに付属するマイコンに対して制御指令を送り、エンコーダの読み取り結果を受け取るノードです。ROS topicの`/cmd_vel`をSubscribeし、`/odom`をPublishします。セットで[cugo_ros_motorcontroller](https://github.com/CuboRex-Development/cugo_ros_arduinodriver.git)使用します。
 
+> [!WARNING]
+> クローラロボット開発プラットフォーム専用の[cugo_ros2_control2](https://github.com/CuboRex-Development/cugo_ros2_control2)をリリースしました。
+>
+> こちらのリポジトリはサポート対象外になりますので、新パッケージをご利用ください。
+> 
+> ROS開発キット CuGo V3 をご利用の方は[こちら](https://github.com/CuboRex-Development/cugo_ros_motorcontroller/tree/uno-udp)を参照してください。
 
-ROS 2 Humbleでディレクトリ構成が変わりました。Humbleをお使いの方は[humble_devel](https://github.com/CuboRex-Development/cugo_ros_control/tree/humble-devel) branchをご参照ください。
 
 
 # Table of Contents
